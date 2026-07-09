@@ -28,7 +28,9 @@ sudo usermod -aG i2c $USER
 
 ---
 
-## Build & Install
+## Build & Install (System-wide)
+
+If you wish to install the library globally on your system:
 
 ```bash
 mkdir build && cd build
@@ -41,8 +43,8 @@ sudo make install
 
 ## Integration (CMake & ROS 2)
 
-### Standard CMake Integration
-If installed to your system, find and link the library in your `CMakeLists.txt`:
+### Standard CMake Integration (With System Installation)
+If installed globally on your system, find and link the library in your `CMakeLists.txt`:
 
 ```cmake
 find_package(bno055lib REQUIRED)
@@ -52,6 +54,31 @@ target_link_libraries(your_target PRIVATE bno055lib::bno055lib)
 Include in your C++ code:
 ```cpp
 #include <bno055lib/bno055.hpp>
+```
+
+### Local CMake Integration (Without System Installation)
+If you do not want to install the library system-wide, you can integrate it locally using one of the following methods:
+
+#### Method A: `add_subdirectory`
+Place the `bno055lib` directory inside your project (e.g., under `third_party/`) and add it in your `CMakeLists.txt`:
+```cmake
+add_subdirectory(third_party/bno055lib)
+target_link_libraries(your_target PRIVATE bno055lib)
+```
+
+#### Method B: `FetchContent` (CMake 3.11+)
+Automatically download and build the library during the CMake configure step:
+```cmake
+include(FetchContent)
+
+FetchContent_Declare(
+  bno055lib
+  GIT_REPOSITORY https://github.com/lazytatzv/bno055lib.git
+  GIT_TAG        main
+)
+FetchContent_MakeAvailable(bno055lib)
+
+target_link_libraries(your_target PRIVATE bno055lib)
 ```
 
 ### ROS 2 (colcon) Integration
