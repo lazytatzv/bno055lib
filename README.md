@@ -4,6 +4,13 @@ A robust, thread-safe, and dependency-free C++17 library for the BNO055 sensor o
 
 Designed for robotic control systems, autonomous vehicles, and ROS 2 deployments that demand high reliability, automatic error recovery, and zero-latency (noexcept) capabilities.
 
+## Compatibility
+
+*   **C++ Version**: C++17 or newer.
+*   **ROS 2 Distributions**: Compatible with all ROS 2 active and LTS distributions (including Foxy, Humble, Iron, Jazzy, and Rolling) as a pure CMake package built via colcon.
+    *   *Note on Older ROS 2 Distributions (e.g., Foxy, Galactic)*: These older distributions default to C++14. You must explicitly enable C++17 in your consuming ROS 2 package's `CMakeLists.txt` by adding `set(CMAKE_CXX_STANDARD 17)` to avoid compilation failures.
+*   **Operating Systems**: Linux (e.g., Ubuntu, Raspberry Pi OS) for hardware execution. macOS and Windows are supported for compilation and simulation via the built-in I2C mock mode.
+
 ---
 
 ## Key Features
@@ -28,6 +35,13 @@ Selecting the appropriate Operation Mode (OpMode) is critical for the stability 
 *   **NDOF (9-DoF Fusion)**: Uses accelerometer, gyroscope, and magnetometer. It outputs absolute orientation relative to the Earth's magnetic field (Yaw is referenced to magnetic North). This mode is suitable for outdoor navigation but highly susceptible to magnetic interference (distortion from iron structures, electric motors, or wiring).
 *   **IMUPlus (6-DoF Fusion)**: Uses accelerometer and gyroscope only. It outputs relative orientation (Yaw starts at 0 on boot and will slowly drift over time). This mode is highly recommended for indoor robotics, autonomous mobile robots (AMRs), and industrial environments where magnetic disturbances are constant.
 *   **AMG (Non-fusion Raw Mode)**: Bypasses the internal fusion processor and outputs raw sensor readings from the Accelerometer, Magnetometer, and Gyroscope. Use this mode if you intend to implement custom state estimation filters (such as EKF or complementary filters) on the host CPU.
+
+### Orientation Formats (Quaternion and Euler Angles)
+
+The library provides two formats for retrieving the 3D orientation computed by the sensor:
+
+*   **Quaternions (De-facto Standard for Robotics)**: Highly recommended for robotics applications (such as ROS 2 navigation, TF2 transforms, and state estimation) to avoid gimbal lock. The BNO055 internal fusion coprocessor computes unit quaternions (w, x, y, z) at 100Hz. The library automatically normalizes this data to a unit quaternion format, making it directly compatible with ROS 2 geometry_msgs/msg/Quaternion and sensor_msgs/msg/Imu messages.
+*   **Euler Angles**: Convenient for human-readable display or simpler projects. The library returns Roll, Pitch, and Yaw in radians via a Vector3 struct (where x = Roll, y = Pitch, and z = Yaw).
 
 ### Sensor Calibration
 
@@ -225,7 +239,7 @@ int main() {
 }
 ```
 
-### 2. Standard Usage (With Exception Handling)
+### 2. Quaternion Retrieval (With Exception Handling)
 ```cpp
 #include <bno055lib/bno055.hpp>
 #include <iostream>
@@ -233,7 +247,8 @@ int main() {
 int main() {
     bno055lib::BNO055 imu(0x28, "/dev/i2c-1");
 
-    if (!imu.begin(bno055lib::OpMode::NDOF)) {
+    // Standard 6-axis IMU mode for indoor robotics
+    if (!imu.begin(bno055lib::OpMode::IMUPlus)) {
         std::cerr << "Initialization failed!" << std::endl;
         return 1;
     }
@@ -241,8 +256,16 @@ int main() {
     imu.loadCalibrationFile("bno055_calib.bin");
 
     try {
-        auto euler = imu.getEulerAngles(); // Throws bno055lib::IMUError on permanent I2C loss
-        std::cout << "Yaw=" << euler.z * 180 / M_PI << std::endl;
+        // Read unit quaternion (w, x, y, z) for 3D orientation.
+        // Directly compatible with ROS 2 geometry_msgs/msg/Quaternion.
+        auto quat = imu.getQuaternion(); // Throws bno055lib::IMUError on permanent I2C loss
+        
+        std::cout << "Quaternion orientation: "
+                  << "w=" << quat.w 
+                  << " x=" << quat.x 
+                  << " y=" << quat.y 
+                  << " z=" << quat.z << std::endl;
+                  
     } catch (const bno055lib::IMUError& e) {
         std::cerr << "Sensor read failed: " << e.what() << std::endl;
     }
