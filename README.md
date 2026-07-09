@@ -57,6 +57,20 @@ Include in your C++ code:
 ### ROS 2 (colcon) Integration
 Place the `bno055lib` directory directly inside your ROS 2 workspace's `src` folder alongside other packages. `colcon` will automatically build it as a pure CMake package.
 
+**Workspace Directory Structure:**
+```text
+your_ros2_ws/
+└── src/
+    ├── bno055lib/         # <--- Place this library here (Pure CMake package)
+    │   ├── CMakeLists.txt
+    │   ├── package.xml
+    │   └── ...
+    └── your_ros_package/  # Your ROS 2 node package (Ament CMake package)
+        ├── CMakeLists.txt
+        ├── package.xml
+        └── ...
+```
+
 To use it from another ROS 2 package:
 1. Add dependency to `package.xml`:
    ```xml
