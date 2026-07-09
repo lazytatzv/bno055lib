@@ -2,8 +2,6 @@
 
 A robust, thread-safe, and dependency-free C++17 library for the BNO055 sensor over I2C on Linux.
 
-Linux用のI2C経由BNO055制御C++17ライブラリ。
-
 ---
 
 ## Build & Install
