@@ -1,8 +1,10 @@
 #include "bno055lib/bno055.hpp"
 
 #include <fcntl.h>
+#ifdef __linux__
 #include <linux/i2c-dev.h>
 #include <sys/ioctl.h>
+#endif
 #include <unistd.h>
 
 #include <chrono>
@@ -12,6 +14,7 @@
 #include <iostream>
 #include <mutex>
 #include <thread>
+#include <vector>
 
 namespace bno055lib {
 
@@ -88,8 +91,12 @@ enum Register : uint8_t {
 
 // Power Modes
 constexpr uint8_t POWER_MODE_NORMAL = 0x00;
-constexpr uint8_t POWER_MODE_LOWPOWER = 0x01;
+[[maybe_unused]] constexpr uint8_t POWER_MODE_LOWPOWER = 0x01;
 constexpr uint8_t POWER_MODE_SUSPEND = 0x02;
+
+#ifndef I2C_SLAVE
+#define I2C_SLAVE 0x0703
+#endif
 
 } // namespace
 
@@ -98,9 +105,20 @@ public:
     uint8_t address_;
     std::string i2c_device_;
     int i2c_fd{-1};
-    OpMode mode_{OpMode::Config};
-    std::mutex mutex_;
+    mutable std::mutex mutex_;
     LoggerCallback logger_;
+
+    // Telemetry Diagnostics
+    Diagnostics diagnostics_;
+
+    // Configuration Cache (to restore on reconnect)
+    OpMode mode_{OpMode::Config};
+    AxisMapConfig axis_map_config_{AxisMapConfig::P1}; // Default P1
+    AxisMapSign axis_map_sign_{AxisMapSign::P1};       // Default P1
+    bool use_xtal_{false};
+    uint8_t unit_sel_val_{0x00}; // Default SI units
+    bool has_offsets_{false};
+    std::array<uint8_t, 22> offsets_data_{0};
 
     Impl(uint8_t address, std::string_view i2c_device)
         : address_(address), i2c_device_(std::string(i2c_device)) {}
@@ -128,6 +146,7 @@ public:
         if (i2c_fd >= 0) {
             return true;
         }
+#ifdef __linux__
         i2c_fd = open(i2c_device_.c_str(), O_RDWR);
         if (i2c_fd < 0) {
             log(LogLevel::Error, "Failed to open I2C device: " + i2c_device_);
@@ -139,17 +158,25 @@ public:
             i2c_fd = -1;
             return false;
         }
+#else
+        // Mock fd for non-Linux platforms
+        i2c_fd = 999;
+        log(LogLevel::Info, "Mocking I2C interface (non-Linux platform detected)");
+#endif
         return true;
     }
 
     void close_i2c() {
         if (i2c_fd >= 0) {
+#ifdef __linux__
             close(i2c_fd);
+#endif
             i2c_fd = -1;
         }
     }
 
     bool reconnect() {
+        diagnostics_.reconnect_attempts++;
         log(LogLevel::Warning, "Attempting to reconnect I2C and reinitialize BNO055...");
         close_i2c();
         std::this_thread::sleep_for(std::chrono::milliseconds(100));
@@ -157,58 +184,122 @@ public:
             return false;
         }
 
-        // Wait boot
-        int timeout = 500;
+        // Wait boot with timeout
+        int timeout = 1000;
         uint8_t id = 0;
+        bool boot_ok = false;
         while (timeout > 0) {
             if (read8_raw(CHIP_ID, id)) {
-                if (id == BNO055_ID) break;
+                if (id == BNO055_ID) {
+                    boot_ok = true;
+                    break;
+                }
             }
             std::this_thread::sleep_for(std::chrono::milliseconds(10));
             timeout -= 10;
         }
-        if (id != BNO055_ID) {
-            log(LogLevel::Error, "Reconnection failed: BNO055 not detected");
+        if (!boot_ok) {
+            log(LogLevel::Error, "Reconnection failed: BNO055 not detected or failed to boot");
             return false;
         }
 
         // Reset
         if (!write8_raw(SYS_TRIGGER, 0x20)) return false;
         std::this_thread::sleep_for(std::chrono::milliseconds(50));
-        while (true) {
+        
+        // Wait boot after reset with timeout
+        timeout = 1000;
+        boot_ok = false;
+        while (timeout > 0) {
             uint8_t chip_id = 0;
-            if (read8_raw(CHIP_ID, chip_id) && chip_id == BNO055_ID) break;
+            if (read8_raw(CHIP_ID, chip_id) && chip_id == BNO055_ID) {
+                boot_ok = true;
+                break;
+            }
             std::this_thread::sleep_for(std::chrono::milliseconds(10));
+            timeout -= 10;
+        }
+        if (!boot_ok) {
+            log(LogLevel::Error, "Reconnection failed: BNO055 did not boot after reset");
+            return false;
         }
         std::this_thread::sleep_for(std::chrono::milliseconds(50));
 
-        // Reapply config
+        // Reapply configuration
         if (!write8_raw(PWR_MODE, POWER_MODE_NORMAL)) return false;
         std::this_thread::sleep_for(std::chrono::milliseconds(10));
         if (!write8_raw(PAGE_ID, 0)) return false;
-        if (!write8_raw(SYS_TRIGGER, 0x0)) return false;
+        
+        // Restore external crystal
+        uint8_t sys_trigger_val = use_xtal_ ? 0x80 : 0x00;
+        if (!write8_raw(SYS_TRIGGER, sys_trigger_val)) return false;
         std::this_thread::sleep_for(std::chrono::milliseconds(10));
         
+        // Restore unit selection
+        if (!write8_raw(UNIT_SEL, unit_sel_val_)) return false;
+        std::this_thread::sleep_for(std::chrono::milliseconds(10));
+
+        // Restore Axis Map & Offsets in CONFIGMODE
+        if (!write8_raw(OPR_MODE, static_cast<uint8_t>(OpMode::Config))) return false;
+        std::this_thread::sleep_for(std::chrono::milliseconds(25));
+
+        if (!write8_raw(AXIS_MAP_CONFIG, static_cast<uint8_t>(axis_map_config_))) return false;
+        std::this_thread::sleep_for(std::chrono::milliseconds(10));
+        if (!write8_raw(AXIS_MAP_SIGN, static_cast<uint8_t>(axis_map_sign_))) return false;
+        std::this_thread::sleep_for(std::chrono::milliseconds(10));
+
+        if (has_offsets_) {
+            if (!writeLen_raw(ACCEL_OFFSET_X_LSB, offsets_data_.data(), 22)) return false;
+            std::this_thread::sleep_for(std::chrono::milliseconds(10));
+        }
+
         // Reapply operating mode
         if (!write8_raw(OPR_MODE, static_cast<uint8_t>(mode_))) return false;
         std::this_thread::sleep_for(std::chrono::milliseconds(30));
 
-        log(LogLevel::Info, "BNO055 reconnected successfully");
+        log(LogLevel::Info, "BNO055 reconnected successfully and state restored");
         return true;
     }
 
     // Low-level raw methods
     bool write8_raw(uint8_t reg, uint8_t value) {
         if (i2c_fd < 0) return false;
+#ifdef __linux__
         uint8_t buffer[2] = {reg, value};
         return ::write(i2c_fd, buffer, 2) == 2;
+#else
+        (void)reg; (void)value;
+        return true;
+#endif
+    }
+
+    bool writeLen_raw(uint8_t reg, const uint8_t* buffer, uint8_t len) {
+        if (i2c_fd < 0) return false;
+#ifdef __linux__
+        std::vector<uint8_t> write_buf(len + 1);
+        write_buf[0] = reg;
+        std::memcpy(write_buf.data() + 1, buffer, len);
+        return ::write(i2c_fd, write_buf.data(), len + 1) == len + 1;
+#else
+        (void)reg; (void)buffer; (void)len;
+        return true;
+#endif
     }
 
     bool read8_raw(uint8_t reg, uint8_t& value) {
         if (i2c_fd < 0) return false;
+#ifdef __linux__
         uint8_t reg_buf[1] = {reg};
         if (::write(i2c_fd, reg_buf, 1) != 1) return false;
         return ::read(i2c_fd, &value, 1) == 1;
+#else
+        if (reg == CHIP_ID) {
+            value = BNO055_ID;
+        } else {
+            value = 0;
+        }
+        return true;
+#endif
     }
 
     // Thread-safe methods with automatic reconnect and retries
@@ -219,53 +310,114 @@ public:
                 std::this_thread::sleep_for(std::chrono::milliseconds(10));
                 continue;
             }
+#ifdef __linux__
             uint8_t buffer[2] = {reg, value};
             if (::write(i2c_fd, buffer, 2) == 2) {
                 return true;
             }
+#else
+            (void)reg; (void)value;
+            return true;
+#endif
+            diagnostics_.write_failures++;
             log(LogLevel::Warning, "I2C write failed, retrying...");
             std::this_thread::sleep_for(std::chrono::milliseconds(5));
         }
 
         if (reconnect()) {
+#ifdef __linux__
             uint8_t buffer[2] = {reg, value};
             if (::write(i2c_fd, buffer, 2) == 2) {
                 return true;
             }
+#else
+            (void)reg; (void)value;
+            return true;
+#endif
         }
+        diagnostics_.write_failures++;
         log(LogLevel::Error, "I2C write failed permanently");
         return false;
     }
 
-    uint8_t read8(uint8_t reg, int retries = 3) {
+    bool writeLen(uint8_t reg, const uint8_t* buffer, uint8_t len, int retries = 3) {
+        std::lock_guard<std::mutex> lock(mutex_);
+        std::vector<uint8_t> write_buf(len + 1);
+        write_buf[0] = reg;
+        std::memcpy(write_buf.data() + 1, buffer, len);
+
+        for (int i = 0; i < retries; ++i) {
+            if (i2c_fd < 0 && !open_i2c()) {
+                std::this_thread::sleep_for(std::chrono::milliseconds(10));
+                continue;
+            }
+#ifdef __linux__
+            if (::write(i2c_fd, write_buf.data(), len + 1) == len + 1) {
+                return true;
+            }
+#else
+            return true;
+#endif
+            diagnostics_.write_failures++;
+            log(LogLevel::Warning, "I2C writeLen failed, retrying...");
+            std::this_thread::sleep_for(std::chrono::milliseconds(5));
+        }
+
+        if (reconnect()) {
+#ifdef __linux__
+            if (::write(i2c_fd, write_buf.data(), len + 1) == len + 1) {
+                return true;
+            }
+#else
+            return true;
+#endif
+        }
+        diagnostics_.write_failures++;
+        log(LogLevel::Error, "I2C writeLen failed permanently");
+        return false;
+    }
+
+    bool read8(uint8_t reg, uint8_t& value, int retries = 3) {
         std::lock_guard<std::mutex> lock(mutex_);
         for (int i = 0; i < retries; ++i) {
             if (i2c_fd < 0 && !open_i2c()) {
                 std::this_thread::sleep_for(std::chrono::milliseconds(10));
                 continue;
             }
+#ifdef __linux__
             uint8_t reg_buf[1] = {reg};
             if (::write(i2c_fd, reg_buf, 1) == 1) {
-                uint8_t value = 0;
                 if (::read(i2c_fd, &value, 1) == 1) {
-                    return value;
+                    return true;
                 }
             }
+#else
+            value = 0;
+            if (reg == CHIP_ID) value = BNO055_ID;
+            return true;
+#endif
+            diagnostics_.read_failures++;
             log(LogLevel::Warning, "I2C read failed, retrying...");
             std::this_thread::sleep_for(std::chrono::milliseconds(5));
         }
 
         if (reconnect()) {
+#ifdef __linux__
             uint8_t reg_buf[1] = {reg};
             if (::write(i2c_fd, reg_buf, 1) == 1) {
-                uint8_t value = 0;
                 if (::read(i2c_fd, &value, 1) == 1) {
-                    return value;
+                    return true;
                 }
             }
+#else
+            value = 0;
+            if (reg == CHIP_ID) value = BNO055_ID;
+            return true;
+#endif
         }
+        diagnostics_.read_failures++;
         log(LogLevel::Error, "I2C read failed permanently");
-        throw IMUError("Failed to read from BNO055 register");
+        return false;
     }
 
     bool readLen(uint8_t reg, uint8_t* buffer, uint8_t len, int retries = 3) {
@@ -275,24 +427,41 @@ public:
                 std::this_thread::sleep_for(std::chrono::milliseconds(10));
                 continue;
             }
+#ifdef __linux__
             uint8_t reg_buf[1] = {reg};
             if (::write(i2c_fd, reg_buf, 1) == 1) {
                 if (::read(i2c_fd, buffer, len) == len) {
                     return true;
                 }
             }
+#else
+            std::memset(buffer, 0, len);
+            if (reg == QUATERNION_DATA_W_LSB && len >= 8) {
+                int16_t w = 16384;
+                buffer[0] = w & 0xFF;
+                buffer[1] = (w >> 8) & 0xFF;
+            }
+            return true;
+#endif
+            diagnostics_.read_failures++;
             log(LogLevel::Warning, "I2C readLen failed, retrying...");
             std::this_thread::sleep_for(std::chrono::milliseconds(5));
         }
 
         if (reconnect()) {
+#ifdef __linux__
             uint8_t reg_buf[1] = {reg};
             if (::write(i2c_fd, reg_buf, 1) == 1) {
                 if (::read(i2c_fd, buffer, len) == len) {
                     return true;
                 }
             }
+#else
+            std::memset(buffer, 0, len);
+            return true;
+#endif
         }
+        diagnostics_.read_failures++;
         log(LogLevel::Error, "I2C readLen failed permanently");
         return false;
     }
@@ -311,22 +480,23 @@ bool BNO055::begin(OpMode mode) {
         return false;
     }
 
-    // Detect device
-    int timeout = 850;
+    // Detect device with timeout
+    int timeout = 1000;
     uint8_t id = 0;
+    bool found = false;
     while (timeout > 0) {
-        try {
-            id = impl_->read8(CHIP_ID, 1);
-            if (id == BNO055_ID) break;
-        } catch (const IMUError&) {
-            // Ignore errors during boot wait
+        if (impl_->read8(CHIP_ID, id, 1)) {
+            if (id == BNO055_ID) {
+                found = true;
+                break;
+            }
         }
         std::this_thread::sleep_for(std::chrono::milliseconds(10));
         timeout -= 10;
     }
 
-    if (id != BNO055_ID) {
-        impl_->log(LogLevel::Error, "BNO055 not detected. Found ID: 0x" + std::string(1, id));
+    if (!found) {
+        impl_->log(LogLevel::Error, "BNO055 not detected. Found ID: 0x" + std::to_string(id));
         return false;
     }
 
@@ -335,12 +505,22 @@ bool BNO055::begin(OpMode mode) {
 
     // Reset
     impl_->write8(SYS_TRIGGER, 0x20);
-    std::this_thread::sleep_for(std::chrono::milliseconds(30));
-    while (true) {
-        try {
-            if (impl_->read8(CHIP_ID, 1) == BNO055_ID) break;
-        } catch (...) {}
+    std::this_thread::sleep_for(std::chrono::milliseconds(50));
+    
+    // Wait boot after reset with timeout (avoid infinite loop)
+    timeout = 1000;
+    found = false;
+    while (timeout > 0) {
+        if (impl_->read8(CHIP_ID, id, 1) && id == BNO055_ID) {
+            found = true;
+            break;
+        }
         std::this_thread::sleep_for(std::chrono::milliseconds(10));
+        timeout -= 10;
+    }
+    if (!found) {
+        impl_->log(LogLevel::Error, "BNO055 did not respond after software reset");
+        return false;
     }
     std::this_thread::sleep_for(std::chrono::milliseconds(50));
 
@@ -349,6 +529,12 @@ bool BNO055::begin(OpMode mode) {
     std::this_thread::sleep_for(std::chrono::milliseconds(10));
 
     impl_->write8(PAGE_ID, 0);
+    
+    // Configure UNIT_SEL explicitly to SI Units (0x00 = m/s^2, dps, degrees, Celsius, Windows orientation)
+    impl_->unit_sel_val_ = 0x00;
+    impl_->write8(UNIT_SEL, impl_->unit_sel_val_);
+    std::this_thread::sleep_for(std::chrono::milliseconds(10));
+
     impl_->write8(SYS_TRIGGER, 0x0);
     std::this_thread::sleep_for(std::chrono::milliseconds(10));
 
@@ -366,10 +552,15 @@ void BNO055::setMode(OpMode mode) {
 }
 
 OpMode BNO055::getMode() {
-    return static_cast<OpMode>(impl_->read8(OPR_MODE));
+    uint8_t mode = 0;
+    if (!impl_->read8(OPR_MODE, mode)) {
+        throw IMUError("Failed to get OPR_MODE");
+    }
+    return static_cast<OpMode>(mode);
 }
 
 void BNO055::setAxisRemap(AxisMapConfig config) {
+    impl_->axis_map_config_ = config;
     OpMode prev = impl_->mode_;
     setMode(OpMode::Config);
     std::this_thread::sleep_for(std::chrono::milliseconds(25));
@@ -380,6 +571,7 @@ void BNO055::setAxisRemap(AxisMapConfig config) {
 }
 
 void BNO055::setAxisSign(AxisMapSign sign) {
+    impl_->axis_map_sign_ = sign;
     OpMode prev = impl_->mode_;
     setMode(OpMode::Config);
     std::this_thread::sleep_for(std::chrono::milliseconds(25));
@@ -390,6 +582,7 @@ void BNO055::setAxisSign(AxisMapSign sign) {
 }
 
 void BNO055::setExtCrystalUse(bool use_xtal) {
+    impl_->use_xtal_ = use_xtal;
     OpMode prev = impl_->mode_;
     setMode(OpMode::Config);
     std::this_thread::sleep_for(std::chrono::milliseconds(25));
@@ -405,9 +598,17 @@ void BNO055::setExtCrystalUse(bool use_xtal) {
 }
 
 Vector3 BNO055::getAccelerometer() {
+    auto val = getAccelerometerNoexcept();
+    if (!val) {
+        throw IMUError("Failed to read accelerometer data");
+    }
+    return *val;
+}
+
+std::optional<Vector3> BNO055::getAccelerometerNoexcept() noexcept {
     uint8_t buffer[6]{0};
     if (!impl_->readLen(ACCEL_DATA_X_LSB, buffer, 6)) {
-        throw IMUError("Failed to read accelerometer data");
+        return std::nullopt;
     }
     int16_t x = static_cast<int16_t>(buffer[0] | (buffer[1] << 8));
     int16_t y = static_cast<int16_t>(buffer[2] | (buffer[3] << 8));
@@ -418,9 +619,17 @@ Vector3 BNO055::getAccelerometer() {
 }
 
 Vector3 BNO055::getMagnetometer() {
+    auto val = getMagnetometerNoexcept();
+    if (!val) {
+        throw IMUError("Failed to read magnetometer data");
+    }
+    return *val;
+}
+
+std::optional<Vector3> BNO055::getMagnetometerNoexcept() noexcept {
     uint8_t buffer[6]{0};
     if (!impl_->readLen(MAG_DATA_X_LSB, buffer, 6)) {
-        throw IMUError("Failed to read magnetometer data");
+        return std::nullopt;
     }
     int16_t x = static_cast<int16_t>(buffer[0] | (buffer[1] << 8));
     int16_t y = static_cast<int16_t>(buffer[2] | (buffer[3] << 8));
@@ -431,9 +640,17 @@ Vector3 BNO055::getMagnetometer() {
 }
 
 Vector3 BNO055::getGyroscope() {
+    auto val = getGyroscopeNoexcept();
+    if (!val) {
+        throw IMUError("Failed to read gyroscope data");
+    }
+    return *val;
+}
+
+std::optional<Vector3> BNO055::getGyroscopeNoexcept() noexcept {
     uint8_t buffer[6]{0};
     if (!impl_->readLen(GYRO_DATA_X_LSB, buffer, 6)) {
-        throw IMUError("Failed to read gyroscope data");
+        return std::nullopt;
     }
     int16_t x = static_cast<int16_t>(buffer[0] | (buffer[1] << 8));
     int16_t y = static_cast<int16_t>(buffer[2] | (buffer[3] << 8));
@@ -445,9 +662,17 @@ Vector3 BNO055::getGyroscope() {
 }
 
 Vector3 BNO055::getEulerAngles() {
+    auto val = getEulerAnglesNoexcept();
+    if (!val) {
+        throw IMUError("Failed to read euler angles");
+    }
+    return *val;
+}
+
+std::optional<Vector3> BNO055::getEulerAnglesNoexcept() noexcept {
     uint8_t buffer[6]{0};
     if (!impl_->readLen(EULER_H_LSB, buffer, 6)) {
-        throw IMUError("Failed to read euler angles");
+        return std::nullopt;
     }
     int16_t h = static_cast<int16_t>(buffer[0] | (buffer[1] << 8));
     int16_t r = static_cast<int16_t>(buffer[2] | (buffer[3] << 8));
@@ -460,9 +685,17 @@ Vector3 BNO055::getEulerAngles() {
 }
 
 Vector3 BNO055::getLinearAcceleration() {
+    auto val = getLinearAccelerationNoexcept();
+    if (!val) {
+        throw IMUError("Failed to read linear acceleration data");
+    }
+    return *val;
+}
+
+std::optional<Vector3> BNO055::getLinearAccelerationNoexcept() noexcept {
     uint8_t buffer[6]{0};
     if (!impl_->readLen(LINEAR_ACCEL_DATA_X_LSB, buffer, 6)) {
-        throw IMUError("Failed to read linear acceleration data");
+        return std::nullopt;
     }
     int16_t x = static_cast<int16_t>(buffer[0] | (buffer[1] << 8));
     int16_t y = static_cast<int16_t>(buffer[2] | (buffer[3] << 8));
@@ -473,9 +706,17 @@ Vector3 BNO055::getLinearAcceleration() {
 }
 
 Vector3 BNO055::getGravity() {
+    auto val = getGravityNoexcept();
+    if (!val) {
+        throw IMUError("Failed to read gravity data");
+    }
+    return *val;
+}
+
+std::optional<Vector3> BNO055::getGravityNoexcept() noexcept {
     uint8_t buffer[6]{0};
     if (!impl_->readLen(GRAVITY_DATA_X_LSB, buffer, 6)) {
-        throw IMUError("Failed to read gravity data");
+        return std::nullopt;
     }
     int16_t x = static_cast<int16_t>(buffer[0] | (buffer[1] << 8));
     int16_t y = static_cast<int16_t>(buffer[2] | (buffer[3] << 8));
@@ -486,9 +727,17 @@ Vector3 BNO055::getGravity() {
 }
 
 Quaternion BNO055::getQuaternion() {
+    auto val = getQuaternionNoexcept();
+    if (!val) {
+        throw IMUError("Failed to read quaternion data");
+    }
+    return *val;
+}
+
+std::optional<Quaternion> BNO055::getQuaternionNoexcept() noexcept {
     uint8_t buffer[8]{0};
     if (!impl_->readLen(QUATERNION_DATA_W_LSB, buffer, 8)) {
-        throw IMUError("Failed to read quaternion data");
+        return std::nullopt;
     }
     int16_t w = static_cast<int16_t>(buffer[0] | (buffer[1] << 8));
     int16_t x = static_cast<int16_t>(buffer[2] | (buffer[3] << 8));
@@ -501,11 +750,31 @@ Quaternion BNO055::getQuaternion() {
 }
 
 int8_t BNO055::getTemperature() {
-    return static_cast<int8_t>(impl_->read8(TEMP));
+    auto val = getTemperatureNoexcept();
+    if (!val) {
+        throw IMUError("Failed to get temperature");
+    }
+    return *val;
+}
+
+std::optional<int8_t> BNO055::getTemperatureNoexcept() noexcept {
+    uint8_t val = 0;
+    if (!impl_->read8(TEMP, val)) {
+        return std::nullopt;
+    }
+    return static_cast<int8_t>(val);
+}
+
+Diagnostics BNO055::getDiagnostics() const noexcept {
+    std::lock_guard<std::mutex> lock(impl_->mutex_);
+    return impl_->diagnostics_;
 }
 
 CalibrationStatus BNO055::getCalibrationStatus() {
-    uint8_t stat = impl_->read8(CALIB_STAT);
+    uint8_t stat = 0;
+    if (!impl_->read8(CALIB_STAT, stat)) {
+        throw IMUError("Failed to get calibration status");
+    }
     CalibrationStatus status;
     status.sys = (stat >> 6) & 0x03;
     status.gyro = (stat >> 4) & 0x03;
@@ -541,6 +810,10 @@ bool BNO055::getSensorOffsets(std::array<uint8_t, 22>& calib_data) {
     std::this_thread::sleep_for(std::chrono::milliseconds(25));
     bool ok = impl_->readLen(ACCEL_OFFSET_X_LSB, calib_data.data(), 22);
     setMode(prev);
+    if (ok) {
+        impl_->offsets_data_ = calib_data;
+        impl_->has_offsets_ = true;
+    }
     return ok;
 }
 
@@ -576,13 +849,13 @@ void BNO055::setSensorOffsets(const Offsets& offsets) {
 }
 
 void BNO055::setSensorOffsets(const std::array<uint8_t, 22>& calib_data) {
+    impl_->offsets_data_ = calib_data;
+    impl_->has_offsets_ = true;
     OpMode prev = impl_->mode_;
     setMode(OpMode::Config);
     std::this_thread::sleep_for(std::chrono::milliseconds(25));
     
-    for (size_t i = 0; i < 22; ++i) {
-        impl_->write8(static_cast<uint8_t>(ACCEL_OFFSET_X_LSB + i), calib_data[i]);
-    }
+    impl_->writeLen(ACCEL_OFFSET_X_LSB, calib_data.data(), 22);
 
     setMode(prev);
 }

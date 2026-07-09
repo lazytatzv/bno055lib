@@ -38,15 +38,20 @@ int main(int argc, char* argv[]) {
     std::cout << "Please move the sensor to calibrate it:" << std::endl;
     std::cout << "  - Gyroscope: Keep the sensor completely still for a few seconds." << std::endl;
     std::cout << "  - Magnetometer: Move the sensor in a figure-8 pattern through the air." << std::endl;
-    std::cout << "  - Accelerometer: Place the sensor in 6 different stable positions (e.g. on each face of a cube)." << std::endl;
+    std::cout << "  - Accelerometer: Place the sensor in 6 different stable positions." << std::endl;
     std::cout << "----------------------------------\n" << std::endl;
 
     while (true) {
         auto status = imu.getCalibrationStatus();
-        std::cout << "\rCalibration status: SYS=" << (int)status.sys 
+        auto diag = imu.getDiagnostics();
+        
+        std::cout << "\rCalib: SYS=" << (int)status.sys 
                   << " GYRO=" << (int)status.gyro 
                   << " ACCEL=" << (int)status.accel 
                   << " MAG=" << (int)status.mag 
+                  << " | Diagnostics: RxErr=" << diag.read_failures
+                  << " TxErr=" << diag.write_failures
+                  << " Reconn=" << diag.reconnect_attempts
                   << "   " << std::flush;
                   
         if (status.isFullyCalibrated()) {

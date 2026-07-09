@@ -2,6 +2,40 @@
 
 A robust, thread-safe, and dependency-free C++17 library for the BNO055 sensor over I2C on Linux.
 
+Designed for robotic control systems, autonomous vehicles, and ROS 2 deployments that demand high reliability, automatic error recovery, and zero-latency (noexcept) capabilities.
+
+---
+
+## Key Features
+
+*   **Thread-Safe**: Safe concurrent access to the IMU from multiple threads or asynchronous control loops.
+*   **State-Preserving Auto-Recovery**: Detects I2C drops, automatically reconnects, and restores all configuration (Axis Remaps, Calibration Offsets, Ext-Crystal selection, and Unit setup).
+*   **Performance Optimized**: Uses sequential burst-writes (writeLen) for uploading calibration offsets in a single batch, reducing bus overhead.
+*   **Zero-Latency API (noexcept)**: Companion non-throwing APIs returning std::optional to avoid memory/CPU overhead of C++ exceptions in real-time execution loops.
+*   **Hardware Diagnostics**: Real-time telemetry tracking cumulative read failures, write failures, and hardware reconnect attempts.
+*   **Cross-Platform Compatibility (Mock Mode)**: Automatically falls back to I2C mocks on macOS/Windows, allowing software compilation and CI/CD validation without access to physical hardware.
+
+---
+
+## Sensor Overview and Operation Modes
+
+The Bosch BNO055 is a System-in-Package (SiP) integrating a triaxial accelerometer, a triaxial gyroscope, a triaxial geomagnetic sensor, and a 32-bit ARM Cortex-M0 microcontroller running Bosch Sensortec sensor fusion software. 
+
+Selecting the appropriate Operation Mode (OpMode) is critical for the stability of your estimation loops.
+
+### Key Fusion Modes
+
+*   **NDOF (9-DoF Fusion)**: Uses accelerometer, gyroscope, and magnetometer. It outputs absolute orientation relative to the Earth's magnetic field (Yaw is referenced to magnetic North). This mode is suitable for outdoor navigation but highly susceptible to magnetic interference (distortion from iron structures, electric motors, or wiring).
+*   **IMUPlus (6-DoF Fusion)**: Uses accelerometer and gyroscope only. It outputs relative orientation (Yaw starts at 0 on boot and will slowly drift over time). This mode is highly recommended for indoor robotics, autonomous mobile robots (AMRs), and industrial environments where magnetic disturbances are constant.
+*   **AMG (Non-fusion Raw Mode)**: Bypasses the internal fusion processor and outputs raw sensor readings from the Accelerometer, Magnetometer, and Gyroscope. Use this mode if you intend to implement custom state estimation filters (such as EKF or complementary filters) on the host CPU.
+
+### Sensor Calibration
+
+The BNO055 calibrates itself dynamically in the background. The calibration status for each sensor ranges from 0 (uncalibrated) to 3 (fully calibrated). To achieve full calibration:
+1.  **Gyroscope**: Keep the sensor completely still in a stable position for a few seconds.
+2.  **Magnetometer**: Move the sensor in a figure-8 pattern through the air.
+3.  **Accelerometer**: Rotate the sensor into 6 different stable positions, holding it still for a few seconds in each orientation (similar to placing a cube on each of its 6 faces).
+
 ---
 
 ## Prerequisites (Linux / Raspberry Pi Setup)
@@ -10,17 +44,17 @@ Before using the library, you must enable the I2C interface on your Linux device
 
 ### 1. Enable I2C
 On Raspberry Pi OS:
-1. Run `sudo raspi-config`.
-2. Navigate to **Interface Options** -> **I2C** and select **Yes** to enable it.
+1. Run sudo raspi-config.
+2. Navigate to Interface Options -> I2C and select Yes to enable it.
 3. Reboot your Raspberry Pi.
 
-Alternatively, add/uncomment the following line in `/boot/config.txt` (or `/boot/firmware/config.txt` on newer OS versions) and reboot:
+Alternatively, add/uncomment the following line in /boot/config.txt (or /boot/firmware/config.txt on newer OS versions) and reboot:
 ```text
 dtparam=i2c_arm=on
 ```
 
 ### 2. Set Permissions
-By default, access to I2C devices (`/dev/i2c-*`) requires root privileges. To run your program as a non-root user, add your user to the `i2c` group:
+By default, access to I2C devices (/dev/i2c-*) requires root privileges. To run your program as a non-root user, add your user to the i2c group:
 ```bash
 sudo usermod -aG i2c $USER
 ```
@@ -29,8 +63,6 @@ sudo usermod -aG i2c $USER
 ---
 
 ## Build & Install (System-wide)
-
-If you wish to install the library globally on your system:
 
 ```bash
 mkdir build && cd build
@@ -44,7 +76,7 @@ sudo make install
 ## Integration (CMake & ROS 2)
 
 ### Standard CMake Integration (With System Installation)
-If installed globally on your system, find and link the library in your `CMakeLists.txt`:
+If installed globally on your system, find and link the library in your CMakeLists.txt:
 
 ```cmake
 find_package(bno055lib REQUIRED)
@@ -57,17 +89,16 @@ Include in your C++ code:
 ```
 
 ### Local CMake Integration (Without System Installation)
-If you do not want to install the library system-wide, you can integrate it locally using one of the following methods:
+If you do not want to install the library system-wide, integrate it locally:
 
-#### Method A: `add_subdirectory`
-Place the `bno055lib` directory inside your project (e.g., under `third_party/`) and add it in your `CMakeLists.txt`:
+#### Method A: add_subdirectory
+Place the bno055lib directory inside your project (e.g., under third_party/) and add it in your CMakeLists.txt:
 ```cmake
 add_subdirectory(third_party/bno055lib)
 target_link_libraries(your_target PRIVATE bno055lib)
 ```
 
-#### Method B: `FetchContent` (CMake 3.11+)
-Automatically download and build the library during the CMake configure step:
+#### Method B: FetchContent (CMake 3.11+)
 ```cmake
 include(FetchContent)
 
@@ -82,7 +113,7 @@ target_link_libraries(your_target PRIVATE bno055lib)
 ```
 
 ### ROS 2 (colcon) Integration
-Place the `bno055lib` directory directly inside your ROS 2 workspace's `src` folder alongside other packages. `colcon` will automatically build it as a pure CMake package.
+Place the bno055lib directory directly inside your ROS 2 workspace's src folder. colcon will build it as a pure CMake package.
 
 **Workspace Directory Structure:**
 ```text
@@ -99,11 +130,11 @@ your_ros2_ws/
 ```
 
 To use it from another ROS 2 package:
-1. Add dependency to `package.xml`:
+1. Add dependency to package.xml:
    ```xml
    <depend>bno055lib</depend>
    ```
-2. Find and link in `CMakeLists.txt`:
+2. Find and link in CMakeLists.txt:
    ```cmake
    find_package(bno055lib REQUIRED)
    ament_target_dependencies(your_node_target bno055lib)
@@ -111,7 +142,46 @@ To use it from another ROS 2 package:
 
 ---
 
-## Usage
+## Running the Examples
+
+After building the project, you can run the compiled example binaries directly from the build directory.
+
+### 1. Read All Sensor Data (Standard API)
+Displays all 8 physical data types and calibration status at 10Hz.
+```bash
+./build/read_all_data
+```
+To specify a different I2C device (e.g., /dev/i2c-0) and/or operation mode (e.g., imu, amg, gyro):
+```bash
+./build/read_all_data /dev/i2c-0 imu
+```
+(Supported modes: ndof, imu, amg, gyro. Default is ndof. Selecting "imu" enables IMUPlus mode, which runs 6-axis sensor fusion without the magnetometer, avoiding orientation drift and distortion in indoor environments with magnetic interference.)
+
+
+### 2. High-Frequency Real-time Loop (Exception-free API)
+Reads orientation, angular velocity, and linear acceleration at 20Hz, displays telemetry diagnostics, and safely suspends the sensor on Ctrl+C.
+```bash
+./build/read_data_noexcept
+```
+
+### 3. Calibration Utility
+Runs the interactive calibration utility to align the accelerometer, gyroscope, and magnetometer, and saves the calibrated offsets to a binary file.
+```bash
+./build/calibrate_imu /dev/i2c-1 bno055_calib.bin
+```
+
+### Troubleshooting Permission Denied
+If you see "Failed to open I2C device" or permission errors, run with sudo or ensure your user belongs to the i2c group as described in the Prerequisites section:
+```bash
+sudo ./build/read_all_data
+```
+
+---
+
+## Usage Examples
+
+### 1. Robust Real-time Loop (Exceptions-Free & Telemetry)
+Highly recommended for real-time controllers (like ROS 2 control nodes) where exceptions are prohibited.
 
 ```cpp
 #include <bno055lib/bno055.hpp>
@@ -120,42 +190,62 @@ To use it from another ROS 2 package:
 #include <chrono>
 
 int main() {
-    // 1. Initialize sensor (default address: 0x28, device: /dev/i2c-1)
+    // 1. Initialize sensor (uses Mock mode automatically on non-Linux platforms)
     bno055lib::BNO055 imu(0x28, "/dev/i2c-1");
 
-    // 2. Setup custom logger (Optional)
-    imu.setLogger([](bno055lib::LogLevel level, std::string_view message) {
-        std::cout << "[IMU] " << message << std::endl;
-    });
-
-    // 3. Start sensor in NDOF fusion mode
     if (!imu.begin(bno055lib::OpMode::NDOF)) {
         std::cerr << "Initialization failed!" << std::endl;
         return 1;
     }
 
-    // 4. Load calibration file if exists (Optional)
-    imu.loadCalibrationFile("bno055_calib.bin");
+    std::cout << "IMU started successfully in exception-free mode." << std::endl;
 
-    // 5. Main loop to read data (SI units)
     while (true) {
-        try {
-            auto accel = imu.getLinearAcceleration(); // m/s^2
-            auto gyro  = imu.getGyroscope();           // rad/s
-            auto euler = imu.getEulerAngles();         // rad (x=Roll, y=Pitch, z=Yaw)
-            auto quat  = imu.getQuaternion();          // Quaternion (w, x, y, z)
-
-            std::cout << "Euler (deg): R=" << euler.x * 180 / M_PI 
-                      << " P=" << euler.y * 180 / M_PI 
-                      << " Y=" << euler.z * 180 / M_PI << std::endl;
-        } catch (const bno055lib::IMUError& e) {
-            std::cerr << "Sensor read error: " << e.what() << std::endl;
+        // 2. Fetch data without exceptions using Noexcept API
+        if (auto gyro = imu.getGyroscopeNoexcept()) {
+            std::cout << "\rGyro: X=" << gyro->x << " Y=" << gyro->y << " Z=" << gyro->z << std::flush;
+        } else {
+            std::cerr << "\n[Warning] Temporary communication dropout." << std::endl;
         }
+
+        // 3. Monitor Telemetry / Diagnostics periodically
+        static int loops = 0;
+        if (++loops % 20 == 0) {
+            auto diag = imu.getDiagnostics();
+            if (diag.reconnect_attempts > 0) {
+                std::cout << "\n[DIAG] I2C errors: RxErr=" << diag.read_failures 
+                          << ", TxErr=" << diag.write_failures 
+                          << ", Reconnects=" << diag.reconnect_attempts << std::endl;
+            }
+        }
+
         std::this_thread::sleep_for(std::chrono::milliseconds(50));
     }
+    return 0;
+}
+```
 
-    // 6. Save calibration on exit (Optional)
-    // imu.saveCalibrationFile("bno055_calib.bin");
+### 2. Standard Usage (With Exception Handling)
+```cpp
+#include <bno055lib/bno055.hpp>
+#include <iostream>
+
+int main() {
+    bno055lib::BNO055 imu(0x28, "/dev/i2c-1");
+
+    if (!imu.begin(bno055lib::OpMode::NDOF)) {
+        std::cerr << "Initialization failed!" << std::endl;
+        return 1;
+    }
+
+    imu.loadCalibrationFile("bno055_calib.bin");
+
+    try {
+        auto euler = imu.getEulerAngles(); // Throws bno055lib::IMUError on permanent I2C loss
+        std::cout << "Yaw=" << euler.z * 180 / M_PI << std::endl;
+    } catch (const bno055lib::IMUError& e) {
+        std::cerr << "Sensor read failed: " << e.what() << std::endl;
+    }
 
     return 0;
 }
@@ -180,11 +270,17 @@ namespace bno055lib {
     };
 
     struct CalibrationStatus {
-        uint8_t sys;   // 0 to 3
+        uint8_t sys;   // 0 (uncalibrated) to 3 (fully calibrated)
         uint8_t gyro;
         uint8_t accel;
         uint8_t mag;
         bool isFullyCalibrated() const;
+    };
+
+    struct Diagnostics {
+        uint32_t write_failures;
+        uint32_t read_failures;
+        uint32_t reconnect_attempts;
     };
 
     enum class OpMode : uint8_t {
@@ -199,44 +295,57 @@ namespace bno055lib {
 }
 ```
 
-### Class `BNO055`
+### Class BNO055
 
 #### Lifecycle
-* **`explicit BNO055(uint8_t i2c_address = 0x28, std::string_view i2c_device = "/dev/i2c-1")`**
-* **`bool begin(OpMode mode = OpMode::NDOF)`**
+* **explicit BNO055(uint8_t i2c_address = 0x28, std::string_view i2c_device = "/dev/i2c-1")**
+* **bool begin(OpMode mode = OpMode::NDOF)**
 
 #### Configuration
-* **`void setMode(OpMode mode)`**
-* **`OpMode getMode()`**
-* **`void setAxisRemap(AxisMapConfig config)`**
-* **`void setAxisSign(AxisMapSign sign)`**
-* **`void setExtCrystalUse(bool use_xtal)`**
+* **void setMode(OpMode mode)**
+* **OpMode getMode()**
+* **void setAxisRemap(AxisMapConfig config)**
+* **void setAxisSign(AxisMapSign sign)**
+* **void setExtCrystalUse(bool use_xtal)**
 
-#### Sensor Data (SI Units)
-* **`Vector3 getAccelerometer()`** (returns $m/s^2$)
-* **`Vector3 getMagnetometer()`** (returns $\mu T$)
-* **`Vector3 getGyroscope()`** (returns $rad/s$)
-* **`Vector3 getEulerAngles()`** (returns `x = Roll`, `y = Pitch`, `z = Yaw` in $rad$)
-* **`Vector3 getLinearAcceleration()`** (returns $m/s^2$)
-* **`Vector3 getGravity()`** (returns $m/s^2$)
-* **`Quaternion getQuaternion()`**
-* **`int8_t getTemperature()`** (returns Celsius)
+#### Sensor Data (Throwing APIs)
+These functions convert registers to SI units (m/s^2, rad/s, rad, uT) and throw IMUError on failures.
+* **Vector3 getAccelerometer()**
+* **Vector3 getMagnetometer()**
+* **Vector3 getGyroscope()**
+* **Vector3 getEulerAngles()**
+* **Vector3 getLinearAcceleration()**
+* **Vector3 getGravity()**
+* **Quaternion getQuaternion()**
+* **int8_t getTemperature()**
 
-#### Calibration & Offsets
-* **`CalibrationStatus getCalibrationStatus()`**
-* **`bool getSensorOffsets(Offsets& offsets)`**
-* **`bool getSensorOffsets(std::array<uint8_t, 22>& calib_data)`**
-* **`void setSensorOffsets(const Offsets& offsets)`**
-* **`void setSensorOffsets(const std::array<uint8_t, 22>& calib_data)`**
-* **`bool saveCalibrationFile(std::string_view filepath)`**
-* **`bool loadCalibrationFile(std::string_view filepath)`**
+#### Sensor Data (Exception-free / noexcept APIs)
+These companion APIs do not throw exceptions. Instead, they return std::nullopt on bus issues.
+* **std::optional\<Vector3\> getAccelerometerNoexcept() noexcept**
+* **std::optional\<Vector3\> getMagnetometerNoexcept() noexcept**
+* **std::optional\<Vector3\> getGyroscopeNoexcept() noexcept**
+* **std::optional\<Vector3\> getEulerAnglesNoexcept() noexcept**
+* **std::optional\<Vector3\> getLinearAccelerationNoexcept() noexcept**
+* **std::optional\<Vector3\> getGravityNoexcept() noexcept**
+* **std::optional\<Quaternion\> getQuaternionNoexcept() noexcept**
+* **std::optional\<int8_t\> getTemperatureNoexcept() noexcept**
+
+#### Diagnostics & Calibration
+* **Diagnostics getDiagnostics() const noexcept**
+* **CalibrationStatus getCalibrationStatus()**
+* **bool getSensorOffsets(Offsets& offsets)**
+* **bool getSensorOffsets(std::array<uint8_t, 22>& calib_data)**
+* **void setSensorOffsets(const Offsets& offsets)**
+* **void setSensorOffsets(const std::array<uint8_t, 22>& calib_data)**
+* **bool saveCalibrationFile(std::string_view filepath)**
+* **bool loadCalibrationFile(std::string_view filepath)**
 
 #### Power Management
-* **`void enterSuspendMode()`**
-* **`void enterNormalMode()`**
+* **void enterSuspendMode()**
+* **void enterNormalMode()**
 
 #### Logging
-* **`void setLogger(LoggerCallback callback)`**
+* **void setLogger(LoggerCallback callback)**
 
 ---
 

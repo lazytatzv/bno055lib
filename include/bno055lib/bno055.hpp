@@ -88,6 +88,13 @@ struct CalibrationStatus {
     }
 };
 
+// Diagnostics information for telemetry and hardware monitoring
+struct Diagnostics {
+    uint32_t write_failures{0};
+    uint32_t read_failures{0};
+    uint32_t reconnect_attempts{0};
+};
+
 // BNO055 Operation Modes
 enum class OpMode : uint8_t {
     Config = 0X00,
@@ -168,6 +175,19 @@ public:
     Vector3 getGravity();
     Quaternion getQuaternion();
     int8_t getTemperature();
+
+    // Non-throwing data getters (returns std::nullopt on failure instead of throwing IMUError)
+    std::optional<Vector3> getAccelerometerNoexcept() noexcept;
+    std::optional<Vector3> getMagnetometerNoexcept() noexcept;
+    std::optional<Vector3> getGyroscopeNoexcept() noexcept;
+    std::optional<Vector3> getEulerAnglesNoexcept() noexcept;
+    std::optional<Vector3> getLinearAccelerationNoexcept() noexcept;
+    std::optional<Vector3> getGravityNoexcept() noexcept;
+    std::optional<Quaternion> getQuaternionNoexcept() noexcept;
+    std::optional<int8_t> getTemperatureNoexcept() noexcept;
+
+    // Diagnostics getter
+    Diagnostics getDiagnostics() const noexcept;
 
     // Calibration and Offset configuration
     CalibrationStatus getCalibrationStatus();
