@@ -17,6 +17,58 @@ sudo make install
 
 ---
 
+## Usage
+
+```cpp
+#include <bno055lib/bno055.hpp>
+#include <iostream>
+#include <thread>
+#include <chrono>
+
+int main() {
+    // 1. Initialize sensor (default address: 0x28, device: /dev/i2c-1)
+    bno055lib::BNO055 imu(0x28, "/dev/i2c-1");
+
+    // 2. Setup custom logger (Optional)
+    imu.setLogger([](bno055lib::LogLevel level, std::string_view message) {
+        std::cout << "[IMU] " << message << std::endl;
+    });
+
+    // 3. Start sensor in NDOF fusion mode
+    if (!imu.begin(bno055lib::OpMode::NDOF)) {
+        std::cerr << "Initialization failed!" << std::endl;
+        return 1;
+    }
+
+    // 4. Load calibration file if exists (Optional)
+    imu.loadCalibrationFile("bno055_calib.bin");
+
+    // 5. Main loop to read data (SI units)
+    while (true) {
+        try {
+            auto accel = imu.getLinearAcceleration(); // m/s^2
+            auto gyro  = imu.getGyroscope();           // rad/s
+            auto euler = imu.getEulerAngles();         // rad (x=Roll, y=Pitch, z=Yaw)
+            auto quat  = imu.getQuaternion();          // Quaternion (w, x, y, z)
+
+            std::cout << "Euler (deg): R=" << euler.x * 180 / M_PI 
+                      << " P=" << euler.y * 180 / M_PI 
+                      << " Y=" << euler.z * 180 / M_PI << std::endl;
+        } catch (const bno055lib::IMUError& e) {
+            std::cerr << "Sensor read error: " << e.what() << std::endl;
+        }
+        std::this_thread::sleep_for(std::chrono::milliseconds(50));
+    }
+
+    // 6. Save calibration on exit (Optional)
+    // imu.saveCalibrationFile("bno055_calib.bin");
+
+    return 0;
+}
+```
+
+---
+
 ## API Reference
 
 ### Namespaces & Types
