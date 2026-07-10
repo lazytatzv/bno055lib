@@ -252,8 +252,8 @@
 <details>
 <summary><strong>Table of Contents</strong></summary>
 <ul class="simple">
+<li><p><a class="reference internal" href="#why-libbno055-linux"><span class="xref myst">Why libbno055-linux?</span></a></p></li>
 <li><p><a class="reference internal" href="#compatibility"><span class="xref myst">Compatibility</span></a></p></li>
-<li><p><a class="reference internal" href="#key-features"><span class="xref myst">Key Features</span></a></p></li>
 <li><p><a class="reference internal" href="#quick-start"><span class="xref myst">Quick Start</span></a></p></li>
 <li><p><a class="reference internal" href="#sensor-overview-and-operation-modes"><span class="xref myst">Sensor Overview and Operation Modes</span></a></p></li>
 <li><p><a class="reference internal" href="#prerequisites-linux--raspberry-pi-setup"><span class="xref myst">Prerequisites (Linux / Raspberry Pi Setup)</span></a></p></li>
@@ -278,15 +278,14 @@
 </ul>
 </section>
 <hr class="docutils" />
-<section id="key-features">
-<h2>Key Features<a class="headerlink" href="#key-features" title="Link to this heading">¶</a></h2>
+<section id="why-libbno055-linux">
+<h2>Why libbno055-linux?<a class="headerlink" href="#why-libbno055-linux" title="Link to this heading">¶</a></h2>
+<p>Most existing BNO055 libraries for Linux are either simple ports of Arduino code or lack the robustness required for production robotics. This library is designed differently:</p>
 <ul class="simple">
-<li><p><strong>Thread-Safe</strong>: Safe concurrent IMU access.</p></li>
-<li><p><strong>Auto-Recovery</strong>: Transparently reconnects and restores state on I2C drops.</p></li>
-<li><p><strong>Performance Optimized</strong>: Minimal bus overhead via burst-writes.</p></li>
-<li><p><strong>Zero-Latency API</strong>: Non-throwing <code class="docutils literal notranslate"><span class="pre">noexcept</span></code> options for real-time loops.</p></li>
-<li><p><strong>Diagnostics</strong>: Built-in telemetry for hardware health monitoring.</p></li>
-<li><p><strong>Cross-Platform</strong>: Built-in I2C mock mode for CI/CD and offline compilation.</p></li>
+<li><p><strong>Self-Healing (Auto-Recovery)</strong>: The BNO055 on Raspberry Pi is notorious for I2C lockups due to hardware clock stretching. Existing libraries crash; this library transparently catches <code class="docutils literal notranslate"><span class="pre">EIO</span></code> faults, flushes the bus, and restores sensor state within milliseconds.</p></li>
+<li><p><strong>Real-Time Safe</strong>: Zero heap allocations (<code class="docutils literal notranslate"><span class="pre">std::vector</span></code> is avoided in hot paths) and exception-free (<code class="docutils literal notranslate"><span class="pre">noexcept</span></code>) APIs guarantee bounded, zero-jitter execution for ROS 2 hardware controllers.</p></li>
+<li><p><strong>Modern &amp; Native</strong>: Written in pure C++17. No Arduino <code class="docutils literal notranslate"><span class="pre">Wire.h</span></code> hacks, no heavy frameworks, and zero external dependencies.</p></li>
+<li><p><strong>CI/CD Ready</strong>: Includes an automatic Mock Mode. You can compile your ROS 2 nodes on macOS or Windows laptops without physical I2C hardware.</p></li>
 </ul>
 </section>
 <hr class="docutils" />
@@ -673,7 +672,7 @@ sudo<span class="w"> </span>make<span class="w"> </span>install
             <ul>
 <li><a class="reference internal" href="#">libbno055-linux</a><ul>
 <li><a class="reference internal" href="#compatibility">Compatibility</a></li>
-<li><a class="reference internal" href="#key-features">Key Features</a></li>
+<li><a class="reference internal" href="#why-libbno055-linux">Why libbno055-linux?</a></li>
 <li><a class="reference internal" href="#quick-start">Quick Start</a></li>
 <li><a class="reference internal" href="#sensor-overview-and-operation-modes">Sensor Overview and Operation Modes</a></li>
 <li><a class="reference internal" href="#prerequisites-linux-raspberry-pi-setup">Prerequisites (Linux / Raspberry Pi Setup)</a><ul>
