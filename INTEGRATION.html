@@ -3,10 +3,10 @@
   <head><meta charset="utf-8">
     <meta name="viewport" content="width=device-width,initial-scale=1">
     <meta name="color-scheme" content="light dark"><meta name="viewport" content="width=device-width, initial-scale=1" />
-<link rel="index" title="Index" href="genindex.html"><link rel="search" title="Search" href="search.html"><link rel="next" title="libbno055-linux API Reference" href="API_REFERENCE.html"><link rel="prev" title="ROS 2 Integration Best Practices" href="INTEGRATION.html">
+<link rel="index" title="Index" href="genindex.html"><link rel="search" title="Search" href="search.html"><link rel="next" title="Sensor Overview and Operation Modes" href="SENSOR_OVERVIEW.html"><link rel="prev" title="Architecture and Design Decisions" href="ARCHITECTURE.html">
 
     <!-- Generated with Sphinx 8.1.3 and Furo 2025.12.19 -->
-        <title>Sensor Overview and Operation Modes - libbno055-linux 1.0.0 documentation</title>
+        <title>ROS 2 Integration Best Practices - libbno055-linux 1.0.0 documentation</title>
       <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=d111a655" />
     <link rel="stylesheet" type="text/css" href="_static/styles/furo.css?v=7bdb33bb" />
     <link rel="stylesheet" type="text/css" href="_static/styles/furo-extensions.css?v=8dab3a3b" />
@@ -194,8 +194,8 @@
 <ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="README.html">libbno055-linux</a></li>
 <li class="toctree-l1"><a class="reference internal" href="ARCHITECTURE.html">Architecture and Design Decisions</a></li>
-<li class="toctree-l1"><a class="reference internal" href="INTEGRATION.html">ROS 2 Integration Best Practices</a></li>
-<li class="toctree-l1 current current-page"><a class="current reference internal" href="#">Sensor Overview and Operation Modes</a></li>
+<li class="toctree-l1 current current-page"><a class="current reference internal" href="#">ROS 2 Integration Best Practices</a></li>
+<li class="toctree-l1"><a class="reference internal" href="SENSOR_OVERVIEW.html">Sensor Overview and Operation Modes</a></li>
 <li class="toctree-l1"><a class="reference internal" href="API_REFERENCE.html">libbno055-linux API Reference</a></li>
 <li class="toctree-l1"><a class="reference internal" href="TROUBLESHOOTING.html">Troubleshooting &amp; FAQ</a></li>
 </ul>
@@ -218,7 +218,7 @@
         </a>
         <div class="content-icon-container">
           <div class="view-this-page">
-  <a class="muted-link" href="_sources/SENSOR_OVERVIEW.md.txt" title="View this page">
+  <a class="muted-link" href="_sources/INTEGRATION.md.txt" title="View this page">
     <svg><use href="#svg-eye"></use></svg>
     <span class="visually-hidden">View this page</span>
   </a>
@@ -236,34 +236,66 @@
           </label>
         </div>
         <article role="main" id="furo-main-content">
-          <section id="sensor-overview-and-operation-modes">
-<h1>Sensor Overview and Operation Modes<a class="headerlink" href="#sensor-overview-and-operation-modes" title="Link to this heading">¶</a></h1>
-<p>The Bosch BNO055 is a System-in-Package (SiP) integrating a triaxial accelerometer, a triaxial gyroscope, a triaxial geomagnetic sensor, and a 32-bit ARM Cortex-M0 microcontroller running Bosch Sensortec sensor fusion software.</p>
-<p>Selecting the appropriate Operation Mode (OpMode) is critical for the stability of your estimation loops.</p>
-<section id="key-fusion-modes">
-<h2>Key Fusion Modes<a class="headerlink" href="#key-fusion-modes" title="Link to this heading">¶</a></h2>
-<ul class="simple">
-<li><p><strong>NDOF (9-DoF Fusion)</strong>: Uses accelerometer, gyroscope, and magnetometer. It outputs absolute orientation relative to the Earth’s magnetic field (Yaw is referenced to magnetic North). This mode is suitable for outdoor navigation but highly susceptible to magnetic interference (distortion from iron structures, electric motors, or wiring).</p></li>
-<li><p><strong>IMUPlus (6-DoF Fusion)</strong>: Uses accelerometer and gyroscope only. It outputs relative orientation (Yaw starts at 0 on boot and will slowly drift over time). This mode is highly recommended for indoor robotics, autonomous mobile robots (AMRs), and industrial environments where magnetic disturbances are constant.</p></li>
-<li><p><strong>AMG (Non-fusion Raw Mode)</strong>: Bypasses the internal fusion processor and outputs raw sensor readings from the Accelerometer, Magnetometer, and Gyroscope. Use this mode if you intend to implement custom state estimation filters (such as EKF or complementary filters) on the host CPU.</p></li>
-</ul>
+          <section id="ros-2-integration-best-practices">
+<h1>ROS 2 Integration Best Practices<a class="headerlink" href="#ros-2-integration-best-practices" title="Link to this heading">¶</a></h1>
+<p>While you can use <code class="docutils literal notranslate"><span class="pre">libbno055-linux</span></code> in standard ROS 2 <code class="docutils literal notranslate"><span class="pre">rclcpp::Node</span></code> instances, for production robotics, we highly recommend utilizing <strong>ROS 2 Lifecycle Nodes (Managed Nodes)</strong>.</p>
+<section id="lifecycle-node-integration-example">
+<h2>Lifecycle Node Integration Example<a class="headerlink" href="#lifecycle-node-integration-example" title="Link to this heading">¶</a></h2>
+<p>Because the BNO055 requires initialization and calibration over I2C (which can fail if the sensor is disconnected or if the I2C bus is not ready), wrapping it in a Lifecycle Node ensures your robot’s state machine handles sensor failures gracefully and predictably.</p>
+<div class="highlight-cpp notranslate"><div class="highlight"><pre><span></span><span class="cp">#include</span><span class="w"> </span><span class="cpf">&quot;rclcpp_lifecycle/lifecycle_node.hpp&quot;</span>
+<span class="cp">#include</span><span class="w"> </span><span class="cpf">&quot;libbno055-linux/bno055.hpp&quot;</span>
+
+<span class="k">using</span><span class="w"> </span><span class="n">CallbackReturn</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">rclcpp_lifecycle</span><span class="o">::</span><span class="n">node_interfaces</span><span class="o">::</span><span class="n">LifecycleNodeInterface</span><span class="o">::</span><span class="n">CallbackReturn</span><span class="p">;</span>
+
+<span class="k">class</span><span class="w"> </span><span class="nc">BNO055Node</span><span class="w"> </span><span class="o">:</span><span class="w"> </span><span class="k">public</span><span class="w"> </span><span class="n">rclcpp_lifecycle</span><span class="o">::</span><span class="n">LifecycleNode</span><span class="w"> </span><span class="p">{</span>
+<span class="k">public</span><span class="o">:</span>
+<span class="w">    </span><span class="n">BNO055Node</span><span class="p">()</span><span class="w"> </span><span class="o">:</span><span class="w"> </span><span class="n">LifecycleNode</span><span class="p">(</span><span class="s">&quot;bno055_node&quot;</span><span class="p">)</span><span class="w"> </span><span class="p">{}</span>
+
+<span class="w">    </span><span class="n">CallbackReturn</span><span class="w"> </span><span class="n">on_configure</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="n">rclcpp_lifecycle</span><span class="o">::</span><span class="n">State</span><span class="w"> </span><span class="o">&amp;</span><span class="p">)</span><span class="w"> </span><span class="k">override</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="n">imu_</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">make_unique</span><span class="o">&lt;</span><span class="n">bno055lib</span><span class="o">::</span><span class="n">BNO055</span><span class="o">&gt;</span><span class="p">(</span><span class="mh">0x28</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;/dev/i2c-1&quot;</span><span class="p">);</span>
+<span class="w">        </span>
+<span class="w">        </span><span class="c1">// Attempt to initialize the hardware</span>
+<span class="w">        </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="o">!</span><span class="n">imu_</span><span class="o">-&gt;</span><span class="n">begin</span><span class="p">(</span><span class="n">bno055lib</span><span class="o">::</span><span class="n">OpMode</span><span class="o">::</span><span class="n">IMUPlus</span><span class="p">))</span><span class="w"> </span><span class="p">{</span>
+<span class="w">            </span><span class="n">RCLCPP_ERROR</span><span class="p">(</span><span class="k">this</span><span class="o">-&gt;</span><span class="n">get_logger</span><span class="p">(),</span><span class="w"> </span><span class="s">&quot;Failed to initialize BNO055 over I2C&quot;</span><span class="p">);</span>
+<span class="w">            </span><span class="k">return</span><span class="w"> </span><span class="n">CallbackReturn</span><span class="o">::</span><span class="n">FAILURE</span><span class="p">;</span>
+<span class="w">        </span><span class="p">}</span>
+
+<span class="w">        </span><span class="c1">// Load pre-calibrated offsets for deterministic startup</span>
+<span class="w">        </span><span class="n">imu_</span><span class="o">-&gt;</span><span class="n">loadCalibrationFile</span><span class="p">(</span><span class="s">&quot;/etc/robot/bno055_calib.bin&quot;</span><span class="p">);</span>
+<span class="w">        </span><span class="n">RCLCPP_INFO</span><span class="p">(</span><span class="k">this</span><span class="o">-&gt;</span><span class="n">get_logger</span><span class="p">(),</span><span class="w"> </span><span class="s">&quot;BNO055 Configured Successfully.&quot;</span><span class="p">);</span>
+<span class="w">        </span>
+<span class="w">        </span><span class="k">return</span><span class="w"> </span><span class="n">CallbackReturn</span><span class="o">::</span><span class="n">SUCCESS</span><span class="p">;</span>
+<span class="w">    </span><span class="p">}</span>
+
+<span class="w">    </span><span class="n">CallbackReturn</span><span class="w"> </span><span class="n">on_activate</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="n">rclcpp_lifecycle</span><span class="o">::</span><span class="n">State</span><span class="w"> </span><span class="o">&amp;</span><span class="p">)</span><span class="w"> </span><span class="k">override</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="c1">// Start publishing timers and data streams</span>
+<span class="w">        </span><span class="k">return</span><span class="w"> </span><span class="n">CallbackReturn</span><span class="o">::</span><span class="n">SUCCESS</span><span class="p">;</span>
+<span class="w">    </span><span class="p">}</span>
+
+<span class="w">    </span><span class="n">CallbackReturn</span><span class="w"> </span><span class="n">on_deactivate</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="n">rclcpp_lifecycle</span><span class="o">::</span><span class="n">State</span><span class="w"> </span><span class="o">&amp;</span><span class="p">)</span><span class="w"> </span><span class="k">override</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="c1">// Stop publishing timers</span>
+<span class="w">        </span><span class="k">return</span><span class="w"> </span><span class="n">CallbackReturn</span><span class="o">::</span><span class="n">SUCCESS</span><span class="p">;</span>
+<span class="w">    </span><span class="p">}</span>
+
+<span class="w">    </span><span class="n">CallbackReturn</span><span class="w"> </span><span class="n">on_cleanup</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="n">rclcpp_lifecycle</span><span class="o">::</span><span class="n">State</span><span class="w"> </span><span class="o">&amp;</span><span class="p">)</span><span class="w"> </span><span class="k">override</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="c1">// Safely destroy the instance and strictly release I2C file descriptors</span>
+<span class="w">        </span><span class="n">imu_</span><span class="p">.</span><span class="n">reset</span><span class="p">();</span>
+<span class="w">        </span><span class="k">return</span><span class="w"> </span><span class="n">CallbackReturn</span><span class="o">::</span><span class="n">SUCCESS</span><span class="p">;</span>
+<span class="w">    </span><span class="p">}</span>
+
+<span class="k">private</span><span class="o">:</span>
+<span class="w">    </span><span class="n">std</span><span class="o">::</span><span class="n">unique_ptr</span><span class="o">&lt;</span><span class="n">bno055lib</span><span class="o">::</span><span class="n">BNO055</span><span class="o">&gt;</span><span class="w"> </span><span class="n">imu_</span><span class="p">;</span>
+<span class="p">};</span>
+</pre></div>
+</div>
 </section>
-<section id="orientation-formats-quaternion-and-euler-angles">
-<h2>Orientation Formats (Quaternion and Euler Angles)<a class="headerlink" href="#orientation-formats-quaternion-and-euler-angles" title="Link to this heading">¶</a></h2>
-<p>The library provides two formats for retrieving the 3D orientation computed by the sensor:</p>
-<ul class="simple">
-<li><p><strong>Quaternions (De-facto Standard for Robotics)</strong>: Highly recommended for robotics applications (such as ROS 2 navigation, TF2 transforms, and state estimation) to avoid gimbal lock. The BNO055 internal fusion coprocessor computes unit quaternions (w, x, y, z) at 100Hz. The library automatically normalizes this data to a unit quaternion format, making it directly compatible with ROS 2 geometry_msgs/msg/Quaternion and sensor_msgs/msg/Imu messages.</p></li>
-<li><p><strong>Euler Angles</strong>: Convenient for human-readable display or simpler projects. The library returns Roll, Pitch, and Yaw in radians via a Vector3 struct (where x = Roll, y = Pitch, and z = Yaw).</p></li>
-</ul>
-</section>
-<section id="sensor-calibration">
-<h2>Sensor Calibration<a class="headerlink" href="#sensor-calibration" title="Link to this heading">¶</a></h2>
-<p>The BNO055 calibrates itself dynamically in the background. The calibration status for each sensor ranges from 0 (uncalibrated) to 3 (fully calibrated). To achieve full calibration:</p>
-<ol class="arabic simple">
-<li><p><strong>Gyroscope</strong>: Keep the sensor completely still in a stable position for a few seconds.</p></li>
-<li><p><strong>Magnetometer</strong>: Move the sensor in a figure-8 pattern through the air.</p></li>
-<li><p><strong>Accelerometer</strong>: Rotate the sensor into 6 different stable positions, holding it still for a few seconds in each orientation (similar to placing a cube on each of its 6 faces).</p></li>
-</ol>
+<section id="integrating-with-rosdep-system-dependencies">
+<h2>Integrating with rosdep (System Dependencies)<a class="headerlink" href="#integrating-with-rosdep-system-dependencies" title="Link to this heading">¶</a></h2>
+<p>When distributing your ROS 2 package, you can declare <code class="docutils literal notranslate"><span class="pre">libbno055-linux</span></code> as a system dependency in your <code class="docutils literal notranslate"><span class="pre">package.xml</span></code>:</p>
+<div class="highlight-xml notranslate"><div class="highlight"><pre><span></span><span class="nt">&lt;depend&gt;</span>libbno055-linux<span class="nt">&lt;/depend&gt;</span>
+</pre></div>
+</div>
+<p>If you are distributing via source, users can use <code class="docutils literal notranslate"><span class="pre">vcpkg</span></code> or <code class="docutils literal notranslate"><span class="pre">FetchContent</span></code> to satisfy this dependency automatically until the library is fully pushed to the ROS Index.</p>
 </section>
 </section>
 
@@ -272,23 +304,23 @@
       <footer>
         
         <div class="related-pages">
-          <a class="next-page" href="API_REFERENCE.html">
+          <a class="next-page" href="SENSOR_OVERVIEW.html">
               <div class="page-info">
                 <div class="context">
                   <span>Next</span>
                 </div>
-                <div class="title">libbno055-linux API Reference</div>
+                <div class="title">Sensor Overview and Operation Modes</div>
               </div>
               <svg class="furo-related-icon"><use href="#svg-arrow-right"></use></svg>
             </a>
-          <a class="prev-page" href="INTEGRATION.html">
+          <a class="prev-page" href="ARCHITECTURE.html">
               <svg class="furo-related-icon"><use href="#svg-arrow-right"></use></svg>
               <div class="page-info">
                 <div class="context">
                   <span>Previous</span>
                 </div>
                 
-                <div class="title">ROS 2 Integration Best Practices</div>
+                <div class="title">Architecture and Design Decisions</div>
                 
               </div>
             </a>
@@ -322,10 +354,9 @@
         <div class="toc-tree-container">
           <div class="toc-tree">
             <ul>
-<li><a class="reference internal" href="#">Sensor Overview and Operation Modes</a><ul>
-<li><a class="reference internal" href="#key-fusion-modes">Key Fusion Modes</a></li>
-<li><a class="reference internal" href="#orientation-formats-quaternion-and-euler-angles">Orientation Formats (Quaternion and Euler Angles)</a></li>
-<li><a class="reference internal" href="#sensor-calibration">Sensor Calibration</a></li>
+<li><a class="reference internal" href="#">ROS 2 Integration Best Practices</a><ul>
+<li><a class="reference internal" href="#lifecycle-node-integration-example">Lifecycle Node Integration Example</a></li>
+<li><a class="reference internal" href="#integrating-with-rosdep-system-dependencies">Integrating with rosdep (System Dependencies)</a></li>
 </ul>
 </li>
 </ul>

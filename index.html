@@ -193,8 +193,11 @@
   <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="README.html">libbno055-linux</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ARCHITECTURE.html">Architecture and Design Decisions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="INTEGRATION.html">ROS 2 Integration Best Practices</a></li>
 <li class="toctree-l1"><a class="reference internal" href="SENSOR_OVERVIEW.html">Sensor Overview and Operation Modes</a></li>
 <li class="toctree-l1"><a class="reference internal" href="API_REFERENCE.html">libbno055-linux API Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="TROUBLESHOOTING.html">Troubleshooting &amp; FAQ</a></li>
 </ul>
 
 </div>
@@ -253,6 +256,19 @@
 <li class="toctree-l2"><a class="reference internal" href="README.html#license">License</a></li>
 </ul>
 </li>
+<li class="toctree-l1"><a class="reference internal" href="ARCHITECTURE.html">Architecture and Design Decisions</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="ARCHITECTURE.html#zero-allocation-exception-free-hot-paths">1. Zero-Allocation &amp; Exception-Free Hot Paths</a></li>
+<li class="toctree-l2"><a class="reference internal" href="ARCHITECTURE.html#the-pimpl-idiom-pointer-to-implementation">2. The PIMPL Idiom (Pointer to Implementation)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="ARCHITECTURE.html#i2c-clock-stretching-auto-recovery">3. I2C Clock Stretching &amp; Auto-Recovery</a></li>
+<li class="toctree-l2"><a class="reference internal" href="ARCHITECTURE.html#thread-safety">4. Thread Safety</a></li>
+<li class="toctree-l2"><a class="reference internal" href="ARCHITECTURE.html#cross-platform-mocking">5. Cross-Platform Mocking</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="INTEGRATION.html">ROS 2 Integration Best Practices</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="INTEGRATION.html#lifecycle-node-integration-example">Lifecycle Node Integration Example</a></li>
+<li class="toctree-l2"><a class="reference internal" href="INTEGRATION.html#integrating-with-rosdep-system-dependencies">Integrating with rosdep (System Dependencies)</a></li>
+</ul>
+</li>
 <li class="toctree-l1"><a class="reference internal" href="SENSOR_OVERVIEW.html">Sensor Overview and Operation Modes</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="SENSOR_OVERVIEW.html#key-fusion-modes">Key Fusion Modes</a></li>
 <li class="toctree-l2"><a class="reference internal" href="SENSOR_OVERVIEW.html#orientation-formats-quaternion-and-euler-angles">Orientation Formats (Quaternion and Euler Angles)</a></li>
@@ -261,6 +277,13 @@
 </li>
 <li class="toctree-l1"><a class="reference internal" href="API_REFERENCE.html">libbno055-linux API Reference</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="API_REFERENCE.html#namespaces-types">Namespaces &amp; Types</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="TROUBLESHOOTING.html">Troubleshooting &amp; FAQ</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="TROUBLESHOOTING.html#i2c-permission-denied">I2C Permission Denied</a></li>
+<li class="toctree-l2"><a class="reference internal" href="TROUBLESHOOTING.html#bno055-clock-stretching-i2c-lockups-on-raspberry-pi">BNO055 Clock Stretching (I2C Lockups on Raspberry Pi)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="TROUBLESHOOTING.html#sensor-calibration-is-lost-on-reboot">Sensor Calibration is Lost on Reboot</a></li>
+<li class="toctree-l2"><a class="reference internal" href="TROUBLESHOOTING.html#why-isn-t-the-magnetometer-working-indoors">Why isn’t the Magnetometer working indoors?</a></li>
 </ul>
 </li>
 </ul>
