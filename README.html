@@ -291,37 +291,110 @@
 <hr class="docutils" />
 <section id="quick-start">
 <h2>Quick Start<a class="headerlink" href="#quick-start" title="Link to this heading">¶</a></h2>
-<ol class="arabic">
-<li><p><strong>Install tools:</strong> <code class="docutils literal notranslate"><span class="pre">sudo</span> <span class="pre">apt</span> <span class="pre">install</span> <span class="pre">build-essential</span> <span class="pre">cmake</span></code></p></li>
-<li><p><strong>Build &amp; Install:</strong></p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>git<span class="w"> </span>clone<span class="w"> </span>https://github.com/lazytatzv/libbno055-linux.git
-<span class="nb">cd</span><span class="w"> </span>libbno055-linux
-mkdir<span class="w"> </span>build<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="nb">cd</span><span class="w"> </span>build
-cmake<span class="w"> </span>..<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>make<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>sudo<span class="w"> </span>make<span class="w"> </span>install
+<p>Whether you are building a standard C++ application or a ROS 2 robot controller, here is how to get the IMU data streaming in less than 5 minutes.</p>
+<section id="a-no-ros-pure-c-raspberry-pi">
+<h3>A. No-ROS (Pure C++ / Raspberry Pi)<a class="headerlink" href="#a-no-ros-pure-c-raspberry-pi" title="Link to this heading">¶</a></h3>
+<p>Follow these steps to run a standalone C++ program using a system installation of the library.</p>
+<section id="build-and-install-the-library">
+<h4>1. Build and Install the Library<a class="headerlink" href="#build-and-install-the-library" title="Link to this heading">¶</a></h4>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>sudo<span class="w"> </span>apt<span class="w"> </span>update<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>sudo<span class="w"> </span>apt<span class="w"> </span>install<span class="w"> </span>-y<span class="w"> </span>build-essential<span class="w"> </span>cmake
+git<span class="w"> </span>clone<span class="w"> </span>https://github.com/lazytatzv/libbno055-linux.git
+<span class="nb">cd</span><span class="w"> </span>libbno055-linux<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>mkdir<span class="w"> </span>build<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="nb">cd</span><span class="w"> </span>build
+cmake<span class="w"> </span>..<span class="w"> </span>-DBUILD_TESTING<span class="o">=</span>OFF
+make<span class="w"> </span>-j<span class="k">$(</span>nproc<span class="k">)</span>
+sudo<span class="w"> </span>make<span class="w"> </span>install
 </pre></div>
 </div>
-</li>
-<li><p><strong>Use in your C++ code</strong> (<code class="docutils literal notranslate"><span class="pre">main.cpp</span></code>):</p>
+</section>
+<section id="write-your-code-main-cpp">
+<h4>2. Write your code (<code class="docutils literal notranslate"><span class="pre">main.cpp</span></code>)<a class="headerlink" href="#write-your-code-main-cpp" title="Link to this heading">¶</a></h4>
 <div class="highlight-cpp notranslate"><div class="highlight"><pre><span></span><span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;libbno055-linux/bno055.hpp&gt;</span>
 <span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;iostream&gt;</span>
+<span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;thread&gt;</span>
+<span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;chrono&gt;</span>
 
 <span class="kt">int</span><span class="w"> </span><span class="nf">main</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="c1">// 0x28 is default I2C address, /dev/i2c-1 is default RPi I2C port</span>
 <span class="w">    </span><span class="n">bno055lib</span><span class="o">::</span><span class="n">BNO055</span><span class="w"> </span><span class="n">imu</span><span class="p">(</span><span class="mh">0x28</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;/dev/i2c-1&quot;</span><span class="p">);</span>
-<span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">imu</span><span class="p">.</span><span class="n">begin</span><span class="p">())</span><span class="w"> </span><span class="p">{</span>
-<span class="w">        </span><span class="k">auto</span><span class="w"> </span><span class="n">quat</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">imu</span><span class="p">.</span><span class="n">getQuaternionOrDefault</span><span class="p">();</span>
-<span class="w">        </span><span class="n">std</span><span class="o">::</span><span class="n">cout</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="s">&quot;w:&quot;</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="n">quat</span><span class="p">.</span><span class="n">w</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="s">&quot; x:&quot;</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="n">quat</span><span class="p">.</span><span class="n">x</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="s">&quot; y:&quot;</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="n">quat</span><span class="p">.</span><span class="n">y</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="s">&quot; z:&quot;</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="n">quat</span><span class="p">.</span><span class="n">z</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="s">&quot;</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">;</span>
+
+<span class="w">    </span><span class="c1">// Initialize in NDOF fusion mode (accelerometer + gyroscope + magnetometer)</span>
+<span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="o">!</span><span class="n">imu</span><span class="p">.</span><span class="n">begin</span><span class="p">(</span><span class="n">bno055lib</span><span class="o">::</span><span class="n">OpMode</span><span class="o">::</span><span class="n">NDOF</span><span class="p">))</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="n">std</span><span class="o">::</span><span class="n">cerr</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="s">&quot;Failed to find BNO055 sensor over I2C!&quot;</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">endl</span><span class="p">;</span>
+<span class="w">        </span><span class="k">return</span><span class="w"> </span><span class="mi">1</span><span class="p">;</span>
 <span class="w">    </span><span class="p">}</span>
+
+<span class="w">    </span><span class="n">std</span><span class="o">::</span><span class="n">cout</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="s">&quot;Streaming BNO055 Quaternion orientation (w, x, y, z)...&quot;</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">endl</span><span class="p">;</span>
+<span class="w">    </span><span class="k">for</span><span class="w"> </span><span class="p">(</span><span class="kt">int</span><span class="w"> </span><span class="n">i</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span><span class="w"> </span><span class="n">i</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="mi">20</span><span class="p">;</span><span class="w"> </span><span class="o">++</span><span class="n">i</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="k">auto</span><span class="w"> </span><span class="n">q</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">imu</span><span class="p">.</span><span class="n">getQuaternionOrDefault</span><span class="p">();</span>
+<span class="w">        </span><span class="n">std</span><span class="o">::</span><span class="n">cout</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="s">&quot;w: &quot;</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="n">q</span><span class="p">.</span><span class="n">w</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="s">&quot; | x: &quot;</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="n">q</span><span class="p">.</span><span class="n">x</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="s">&quot; | y: &quot;</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="n">q</span><span class="p">.</span><span class="n">y</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="s">&quot; | z: &quot;</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="n">q</span><span class="p">.</span><span class="n">z</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">endl</span><span class="p">;</span>
+<span class="w">        </span><span class="n">std</span><span class="o">::</span><span class="n">this_thread</span><span class="o">::</span><span class="n">sleep_for</span><span class="p">(</span><span class="n">std</span><span class="o">::</span><span class="n">chrono</span><span class="o">::</span><span class="n">milliseconds</span><span class="p">(</span><span class="mi">100</span><span class="p">));</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span>
 <span class="p">}</span>
 </pre></div>
 </div>
-</li>
-<li><p><strong>Compile &amp; Run:</strong></p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>g++<span class="w"> </span>main.cpp<span class="w"> </span>-lbno055-linux<span class="w"> </span>-o<span class="w"> </span>main
-./main
+</section>
+<section id="compile-and-run">
+<h4>3. Compile and Run<a class="headerlink" href="#compile-and-run" title="Link to this heading">¶</a></h4>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>g++<span class="w"> </span>-std<span class="o">=</span>c++17<span class="w"> </span>main.cpp<span class="w"> </span>-lbno055-linux<span class="w"> </span>-o<span class="w"> </span>imu_demo
+./imu_demo
+</pre></div>
+</div>
+</section>
+</section>
+<hr class="docutils" />
+<section id="b-ros-2-colcon-workspace">
+<h3>B. ROS 2 (colcon workspace)<a class="headerlink" href="#b-ros-2-colcon-workspace" title="Link to this heading">¶</a></h3>
+<p>Follow these steps to integrate and run the BNO055 publisher nodes directly inside your robot’s ROS 2 workspace.</p>
+<section id="setup-and-build-workspace">
+<h4>1. Setup and Build Workspace<a class="headerlink" href="#setup-and-build-workspace" title="Link to this heading">¶</a></h4>
+<p>Make sure your ROS 2 environment is sourced (e.g., Humble, Jazzy):</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># 1. Navigate to your ROS 2 workspace src directory</span>
+<span class="nb">cd</span><span class="w"> </span>~/ros2_ws/src
+
+<span class="c1"># 2. Clone this library directly inside src</span>
+git<span class="w"> </span>clone<span class="w"> </span>https://github.com/lazytatzv/libbno055-linux.git
+
+<span class="c1"># 3. Build using colcon</span>
+<span class="nb">cd</span><span class="w"> </span>~/ros2_ws
+rosdep<span class="w"> </span>install<span class="w"> </span>--from-paths<span class="w"> </span>src<span class="w"> </span>--ignore-src<span class="w"> </span>-y
+colcon<span class="w"> </span>build<span class="w"> </span>--packages-select<span class="w"> </span>libbno055_linux
+<span class="nb">source</span><span class="w"> </span>install/setup.bash
+</pre></div>
+</div>
+</section>
+<section id="launch-the-nodes">
+<h4>2. Launch the Nodes<a class="headerlink" href="#launch-the-nodes" title="Link to this heading">¶</a></h4>
+<ul>
+<li><p><strong>Option 1: Standard Standalone Node (Recommended for quick testing)</strong></p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>ros2<span class="w"> </span>run<span class="w"> </span>libbno055_linux<span class="w"> </span>bno055_publisher_node
 </pre></div>
 </div>
 </li>
-</ol>
+<li><p><strong>Option 2: High-Performance Zero-Copy Node (Recommended for Composable Components)</strong></p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>ros2<span class="w"> </span>run<span class="w"> </span>libbno055_linux<span class="w"> </span>bno055_perf_publisher_node
+</pre></div>
+</div>
+</li>
+<li><p><strong>Option 3: Lifecycle Managed Node (Recommended for production AMR/AGV stacks)</strong></p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># Terminal 1: Run the node</span>
+ros2<span class="w"> </span>run<span class="w"> </span>libbno055_linux<span class="w"> </span>bno055_lifecycle_publisher_node
+
+<span class="c1"># Terminal 2: Trigger state transitions to start publishing</span>
+ros2<span class="w"> </span>lifecycle<span class="w"> </span><span class="nb">set</span><span class="w"> </span>/bno055_lifecycle_publisher_node<span class="w"> </span>configure
+ros2<span class="w"> </span>lifecycle<span class="w"> </span><span class="nb">set</span><span class="w"> </span>/bno055_lifecycle_publisher_node<span class="w"> </span>activate
+</pre></div>
+</div>
+</li>
+</ul>
+</section>
+<section id="verify-topic-stream">
+<h4>3. Verify Topic Stream<a class="headerlink" href="#verify-topic-stream" title="Link to this heading">¶</a></h4>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>ros2<span class="w"> </span>topic<span class="w"> </span><span class="nb">echo</span><span class="w"> </span>/imu/data
+</pre></div>
+</div>
+</section>
+</section>
 </section>
 <hr class="docutils" />
 <section id="sensor-overview-and-operation-modes">
@@ -723,7 +796,21 @@ sudo<span class="w"> </span>make<span class="w"> </span>install
 <li><a class="reference internal" href="#">libbno055-linux</a><ul>
 <li><a class="reference internal" href="#compatibility">Compatibility</a></li>
 <li><a class="reference internal" href="#why-libbno055-linux">Why libbno055-linux?</a></li>
-<li><a class="reference internal" href="#quick-start">Quick Start</a></li>
+<li><a class="reference internal" href="#quick-start">Quick Start</a><ul>
+<li><a class="reference internal" href="#a-no-ros-pure-c-raspberry-pi">A. No-ROS (Pure C++ / Raspberry Pi)</a><ul>
+<li><a class="reference internal" href="#build-and-install-the-library">1. Build and Install the Library</a></li>
+<li><a class="reference internal" href="#write-your-code-main-cpp">2. Write your code (<code class="docutils literal notranslate"><span class="pre">main.cpp</span></code>)</a></li>
+<li><a class="reference internal" href="#compile-and-run">3. Compile and Run</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#b-ros-2-colcon-workspace">B. ROS 2 (colcon workspace)</a><ul>
+<li><a class="reference internal" href="#setup-and-build-workspace">1. Setup and Build Workspace</a></li>
+<li><a class="reference internal" href="#launch-the-nodes">2. Launch the Nodes</a></li>
+<li><a class="reference internal" href="#verify-topic-stream">3. Verify Topic Stream</a></li>
+</ul>
+</li>
+</ul>
+</li>
 <li><a class="reference internal" href="#sensor-overview-and-operation-modes">Sensor Overview and Operation Modes</a></li>
 <li><a class="reference internal" href="#prerequisites-linux-raspberry-pi-setup">Prerequisites (Linux / Raspberry Pi Setup)</a><ul>
 <li><a class="reference internal" href="#hardware-wiring-raspberry-pi">1. Hardware Wiring (Raspberry Pi)</a></li>
