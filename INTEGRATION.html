@@ -420,46 +420,61 @@ rosdep<span class="w"> </span>install<span class="w"> </span>--from-paths<span c
 </section>
 <section id="running-the-nodes">
 <h3>4.3. Running the Nodes<a class="headerlink" href="#running-the-nodes" title="Link to this heading">¶</a></h3>
-<section id="standard-standalone-node">
-<h4>Standard Standalone Node<a class="headerlink" href="#standard-standalone-node" title="Link to this heading">¶</a></h4>
-<p>Run the standard publisher node:</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>ros2<span class="w"> </span>run<span class="w"> </span>libbno055_linux<span class="w"> </span>bno055_publisher_node
-</pre></div>
-</div>
-<p>You can pass ROS 2 parameters to override the default I2C device and address:</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>ros2<span class="w"> </span>run<span class="w"> </span>libbno055_linux<span class="w"> </span>bno055_publisher_node<span class="w"> </span>--ros-args<span class="w"> </span>-p<span class="w"> </span>device:<span class="o">=</span><span class="s2">&quot;/dev/i2c-2&quot;</span><span class="w"> </span>-p<span class="w"> </span>address:<span class="o">=</span><span class="m">40</span>
-</pre></div>
-</div>
-</section>
-<section id="high-performance-node">
-<h4>High-Performance Node<a class="headerlink" href="#high-performance-node" title="Link to this heading">¶</a></h4>
-<p>This node uses <code class="docutils literal notranslate"><span class="pre">std::unique_ptr</span></code> and <code class="docutils literal notranslate"><span class="pre">std::move</span></code> during publishing to enable zero-copy intra-process transport. Run it with:</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>ros2<span class="w"> </span>run<span class="w"> </span>libbno055_linux<span class="w"> </span>bno055_perf_publisher_node
-</pre></div>
-</div>
-</section>
-<section id="lifecycle-node-managed-node">
-<h4>Lifecycle Node (Managed Node)<a class="headerlink" href="#lifecycle-node-managed-node" title="Link to this heading">¶</a></h4>
-<p>The Lifecycle node remains in the <code class="docutils literal notranslate"><span class="pre">Unconfigured</span></code> state upon startup and does not publish immediately. You must command state transitions externally.</p>
-<ol class="arabic">
-<li><p><strong>Start the node:</strong></p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>ros2<span class="w"> </span>run<span class="w"> </span>libbno055_linux<span class="w"> </span>bno055_lifecycle_publisher_node
+<p>You can launch and configure the nodes using the provided launch file and parameters YAML file.</p>
+<section id="a-launching-via-launch-file-recommended">
+<h4>A. Launching via Launch File (Recommended)<a class="headerlink" href="#a-launching-via-launch-file-recommended" title="Link to this heading">¶</a></h4>
+<p>You can launch any of the three node types (<code class="docutils literal notranslate"><span class="pre">standard</span></code>, <code class="docutils literal notranslate"><span class="pre">perf</span></code>, or <code class="docutils literal notranslate"><span class="pre">lifecycle</span></code>) and customize their parameters using the ROS 2 Launch system.</p>
+<ul>
+<li><p><strong>Standard Node (Default)</strong>:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>ros2<span class="w"> </span>launch<span class="w"> </span>libbno055_linux<span class="w"> </span>bno055_launch.py<span class="w"> </span>node_type:<span class="o">=</span>standard
 </pre></div>
 </div>
 </li>
-<li><p><strong>Transition states (from another terminal):</strong></p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># Configure: Boot the sensor and put it into low-power suspend mode</span>
+<li><p><strong>High-Performance Node</strong>:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>ros2<span class="w"> </span>launch<span class="w"> </span>libbno055_linux<span class="w"> </span>bno055_launch.py<span class="w"> </span>node_type:<span class="o">=</span>perf
+</pre></div>
+</div>
+</li>
+<li><p><strong>Lifecycle Node</strong>:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>ros2<span class="w"> </span>launch<span class="w"> </span>libbno055_linux<span class="w"> </span>bno055_launch.py<span class="w"> </span>node_type:<span class="o">=</span>lifecycle
+</pre></div>
+</div>
+</li>
+</ul>
+<p>To customize parameters, copy and edit the installed template <code class="docutils literal notranslate"><span class="pre">config/bno055_params.yaml</span></code>, then load it via launch:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>ros2<span class="w"> </span>launch<span class="w"> </span>libbno055_linux<span class="w"> </span>bno055_launch.py<span class="w"> </span>params_file:<span class="o">=</span>/path/to/your/custom_params.yaml
+</pre></div>
+</div>
+</section>
+<section id="b-direct-command-line-alternative">
+<h4>B. Direct Command Line (Alternative)<a class="headerlink" href="#b-direct-command-line-alternative" title="Link to this heading">¶</a></h4>
+<ul>
+<li><p><strong>Standard Standalone Node</strong>:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>ros2<span class="w"> </span>run<span class="w"> </span>libbno055_linux<span class="w"> </span>bno055_publisher_node
+</pre></div>
+</div>
+<p>You can override parameters directly via CLI:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>ros2<span class="w"> </span>run<span class="w"> </span>libbno055_linux<span class="w"> </span>bno055_publisher_node<span class="w"> </span>--ros-args<span class="w"> </span>-p<span class="w"> </span>device:<span class="o">=</span><span class="s2">&quot;/dev/i2c-2&quot;</span><span class="w"> </span>-p<span class="w"> </span>address:<span class="o">=</span><span class="m">40</span>
+</pre></div>
+</div>
+</li>
+<li><p><strong>High-Performance Zero-Copy Node</strong>:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>ros2<span class="w"> </span>run<span class="w"> </span>libbno055_linux<span class="w"> </span>bno055_perf_publisher_node
+</pre></div>
+</div>
+</li>
+<li><p><strong>Lifecycle Managed Node</strong>:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># Terminal 1: Run the node</span>
+ros2<span class="w"> </span>run<span class="w"> </span>libbno055_linux<span class="w"> </span>bno055_lifecycle_publisher_node
+
+<span class="c1"># Terminal 2: Trigger state transitions to start publishing</span>
 ros2<span class="w"> </span>lifecycle<span class="w"> </span><span class="nb">set</span><span class="w"> </span>/bno055_lifecycle_publisher_node<span class="w"> </span>configure
-
-<span class="c1"># Activate: Wake the sensor up and start high-rate IMU publishing</span>
 ros2<span class="w"> </span>lifecycle<span class="w"> </span><span class="nb">set</span><span class="w"> </span>/bno055_lifecycle_publisher_node<span class="w"> </span>activate
-
-<span class="c1"># Deactivate: Pause publishing and suspend the sensor</span>
 ros2<span class="w"> </span>lifecycle<span class="w"> </span><span class="nb">set</span><span class="w"> </span>/bno055_lifecycle_publisher_node<span class="w"> </span>deactivate
 </pre></div>
 </div>
 </li>
-</ol>
+</ul>
 </section>
 </section>
 <section id="verification">
@@ -535,9 +550,8 @@ ros2<span class="w"> </span>lifecycle<span class="w"> </span><span class="nb">se
 <li><a class="reference internal" href="#prerequisites">4.1. Prerequisites</a></li>
 <li><a class="reference internal" href="#building-inside-a-ros-2-workspace">4.2. Building inside a ROS 2 Workspace</a></li>
 <li><a class="reference internal" href="#running-the-nodes">4.3. Running the Nodes</a><ul>
-<li><a class="reference internal" href="#standard-standalone-node">Standard Standalone Node</a></li>
-<li><a class="reference internal" href="#high-performance-node">High-Performance Node</a></li>
-<li><a class="reference internal" href="#lifecycle-node-managed-node">Lifecycle Node (Managed Node)</a></li>
+<li><a class="reference internal" href="#a-launching-via-launch-file-recommended">A. Launching via Launch File (Recommended)</a></li>
+<li><a class="reference internal" href="#b-direct-command-line-alternative">B. Direct Command Line (Alternative)</a></li>
 </ul>
 </li>
 <li><a class="reference internal" href="#verification">4.4. Verification</a></li>
