@@ -333,6 +333,41 @@
 <li><p><strong>Result</strong>: You can compile your ROS 2 packages natively on macOS/Windows, write GTest unit tests against the IMU logic, and verify your math without needing a physical Raspberry Pi or sensor.</p></li>
 </ul>
 </section>
+<hr class="docutils" />
+<section id="ros-2-node-architectures-zero-copy-communication">
+<h2>6. ROS 2 Node Architectures &amp; Zero-Copy Communication<a class="headerlink" href="#ros-2-node-architectures-zero-copy-communication" title="Link to this heading">¶</a></h2>
+<p>The library includes three ROS 2 node implementations located in the <code class="docutils literal notranslate"><span class="pre">src/ros2/</span></code> directory, designed to cover various robotics system requirements:</p>
+<section id="standard-standalone-node-bno055-publisher-node">
+<h3>Standard Standalone Node (<code class="docutils literal notranslate"><span class="pre">bno055_publisher_node</span></code>)<a class="headerlink" href="#standard-standalone-node-bno055-publisher-node" title="Link to this heading">¶</a></h3>
+<p>Designed for simplicity and general-purpose robotics. It initializes the sensor, redirects logs to <code class="docutils literal notranslate"><span class="pre">RCLCPP</span></code>, and publishes the IMU message via a standard asynchronous timer.</p>
+</section>
+<section id="high-performance-zero-copy-node-bno055-perf-publisher-node">
+<h3>High-Performance Zero-Copy Node (<code class="docutils literal notranslate"><span class="pre">bno055_perf_publisher_node</span></code>)<a class="headerlink" href="#high-performance-zero-copy-node-bno055-perf-publisher-node" title="Link to this heading">¶</a></h3>
+<p>Optimized for resource-constrained embedded systems and high-rate feedback loops.</p>
+<ul class="simple">
+<li><p><strong>Zero-Copy Message Passing</strong>: Instead of publishing by value, this node allocates a <code class="docutils literal notranslate"><span class="pre">std::unique_ptr&lt;sensor_msgs::msg::Imu&gt;</span></code> and passes ownership using <code class="docutils literal notranslate"><span class="pre">std::move()</span></code>. When executed within a ROS 2 Composable Node Container alongside compatible subscriber nodes, ROS 2 completely bypasses message serialization and memory copying, passing the underlying pointer directly through shared memory.</p></li>
+<li><p><strong>Deterministic Execution</strong>: Uses <code class="docutils literal notranslate"><span class="pre">noexcept</span></code> APIs to ensure that sensor read failures do not invoke the overhead of C++ stack unwinding in high-frequency control loops.</p></li>
+</ul>
+</section>
+<section id="managed-lifecycle-node-bno055-lifecycle-publisher-node">
+<h3>Managed Lifecycle Node (<code class="docutils literal notranslate"><span class="pre">bno055_lifecycle_publisher_node</span></code>)<a class="headerlink" href="#managed-lifecycle-node-bno055-lifecycle-publisher-node" title="Link to this heading">¶</a></h3>
+<p>For production robots requiring strict startup sequences and energy efficiency, the Lifecycle Node maps ROS 2 state transitions directly to BNO055 hardware states:</p>
+<div class="highlight-mermaid notranslate"><div class="highlight"><pre><span></span>stateDiagram-v2
+    [*] --&gt; Unconfigured
+    Unconfigured --&gt; Inactive : on_configure()\n(Init Hardware, Enter Suspend)
+    Inactive --&gt; Active : on_activate()\n(Enter Normal Mode, Start Timer)
+    Active --&gt; Inactive : on_deactivate()\n(Cancel Timer, Enter Suspend)
+    Inactive --&gt; Unconfigured : on_cleanup()\n(Reset resources, Close FD)
+    Active --&gt; Finalized : on_shutdown()
+    Inactive --&gt; Finalized : on_shutdown()
+</pre></div>
+</div>
+<ul class="simple">
+<li><p><strong>Power Efficiency (Suspend Mode)</strong>: In the <code class="docutils literal notranslate"><span class="pre">Inactive</span></code> state (before activation or after deactivation), the node puts the BNO055 sensor into low-power <strong>Suspend Mode</strong> and pauses the high-rate publishing timer. The sensor only wakes up to <strong>Normal Mode</strong> when transitioned to the <code class="docutils literal notranslate"><span class="pre">Active</span></code> state.</p></li>
+<li><p><strong>Deterministic Initialization</strong>: Avoids racing conditions in robot startup by letting the coordinator configure and test I2C connectivity before active streaming starts.</p></li>
+</ul>
+</section>
+</section>
 </section>
 
         </article>
@@ -407,6 +442,12 @@
 </li>
 <li><a class="reference internal" href="#thread-safety-concurrency">4. Thread Safety &amp; Concurrency</a></li>
 <li><a class="reference internal" href="#cross-platform-mocking-ci-cd-ready">5. Cross-Platform Mocking (CI/CD Ready)</a></li>
+<li><a class="reference internal" href="#ros-2-node-architectures-zero-copy-communication">6. ROS 2 Node Architectures &amp; Zero-Copy Communication</a><ul>
+<li><a class="reference internal" href="#standard-standalone-node-bno055-publisher-node">Standard Standalone Node (<code class="docutils literal notranslate"><span class="pre">bno055_publisher_node</span></code>)</a></li>
+<li><a class="reference internal" href="#high-performance-zero-copy-node-bno055-perf-publisher-node">High-Performance Zero-Copy Node (<code class="docutils literal notranslate"><span class="pre">bno055_perf_publisher_node</span></code>)</a></li>
+<li><a class="reference internal" href="#managed-lifecycle-node-bno055-lifecycle-publisher-node">Managed Lifecycle Node (<code class="docutils literal notranslate"><span class="pre">bno055_lifecycle_publisher_node</span></code>)</a></li>
+</ul>
+</li>
 </ul>
 </li>
 </ul>

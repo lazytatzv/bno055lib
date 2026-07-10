@@ -504,12 +504,26 @@ sudo<span class="w"> </span>make<span class="w"> </span>install
 </pre></div>
 </div>
 </section>
-<section id="ros-2-publisher-node-optional">
-<h3>4. ROS 2 Publisher Node (Optional)<a class="headerlink" href="#ros-2-publisher-node-optional" title="Link to this heading">¶</a></h3>
-<p>If a ROS 2 environment is detected during compilation, the library compiles a standalone ROS 2 publisher node that reads IMU data and publishes it to the <code class="docutils literal notranslate"><span class="pre">/imu/data</span></code> topic as a <code class="docutils literal notranslate"><span class="pre">sensor_msgs/msg/Imu</span></code> message.</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>./build/bno055_publisher_node<span class="w"> </span>--ros-args<span class="w"> </span>-p<span class="w"> </span>device:<span class="o">=</span><span class="s2">&quot;/dev/i2c-1&quot;</span><span class="w"> </span>-p<span class="w"> </span>publish_rate:<span class="o">=</span><span class="m">50</span>.0
+<section id="ros-2-publisher-nodes-optional">
+<h3>4. ROS 2 Publisher Nodes (Optional)<a class="headerlink" href="#ros-2-publisher-nodes-optional" title="Link to this heading">¶</a></h3>
+<p>If a ROS 2 environment is detected during compilation, the library compiles three distinct ROS 2 publisher nodes to support different system integration designs:</p>
+<ul>
+<li><p><strong>Standard Standalone Node (<code class="docutils literal notranslate"><span class="pre">bno055_publisher_node</span></code>)</strong>:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>ros2<span class="w"> </span>run<span class="w"> </span>libbno055_linux<span class="w"> </span>bno055_publisher_node<span class="w"> </span>--ros-args<span class="w"> </span>-p<span class="w"> </span>device:<span class="o">=</span><span class="s2">&quot;/dev/i2c-1&quot;</span><span class="w"> </span>-p<span class="w"> </span>publish_rate:<span class="o">=</span><span class="m">50</span>.0
 </pre></div>
 </div>
+</li>
+<li><p><strong>High-Performance Zero-Copy Node (<code class="docutils literal notranslate"><span class="pre">bno055_perf_publisher_node</span></code>)</strong>: Optimized using <code class="docutils literal notranslate"><span class="pre">std::unique_ptr</span></code> and <code class="docutils literal notranslate"><span class="pre">std::move</span></code> to allow zero-copy intra-process message passing when composed.</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>ros2<span class="w"> </span>run<span class="w"> </span>libbno055_linux<span class="w"> </span>bno055_perf_publisher_node
+</pre></div>
+</div>
+</li>
+<li><p><strong>Managed Lifecycle Node (<code class="docutils literal notranslate"><span class="pre">bno055_lifecycle_publisher_node</span></code>)</strong>: Integrates with ROS 2 Lifecycle management to handle state transitions (configure, activate, deactivate, cleanup) and syncs hardware low-power states.</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>ros2<span class="w"> </span>run<span class="w"> </span>libbno055_linux<span class="w"> </span>bno055_lifecycle_publisher_node
+</pre></div>
+</div>
+</li>
+</ul>
 </section>
 <section id="troubleshooting-permission-denied">
 <h3>Troubleshooting Permission Denied<a class="headerlink" href="#troubleshooting-permission-denied" title="Link to this heading">¶</a></h3>
@@ -732,7 +746,7 @@ sudo<span class="w"> </span>make<span class="w"> </span>install
 <li><a class="reference internal" href="#read-all-sensor-data-standard-api">1. Read All Sensor Data (Standard API)</a></li>
 <li><a class="reference internal" href="#high-frequency-real-time-loop-exception-free-api">2. High-Frequency Real-time Loop (Exception-free API)</a></li>
 <li><a class="reference internal" href="#calibration-utility">3. Calibration Utility</a></li>
-<li><a class="reference internal" href="#ros-2-publisher-node-optional">4. ROS 2 Publisher Node (Optional)</a></li>
+<li><a class="reference internal" href="#ros-2-publisher-nodes-optional">4. ROS 2 Publisher Nodes (Optional)</a></li>
 <li><a class="reference internal" href="#troubleshooting-permission-denied">Troubleshooting Permission Denied</a></li>
 </ul>
 </li>
