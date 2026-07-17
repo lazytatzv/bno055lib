@@ -239,7 +239,7 @@
         <article role="main" id="furo-main-content">
           <section id="advanced-ros-2-integration-guide">
 <h1>Advanced ROS 2 Integration Guide<a class="headerlink" href="#advanced-ros-2-integration-guide" title="Link to this heading">¶</a></h1>
-<p>For robust robotics applications, simply dropping a sensor read into a <code class="docutils literal notranslate"><span class="pre">rclcpp::TimerBase</span></code> is insufficient. Hardware sensors can disconnect, drivers can crash, and I2C buses can lock up.</p>
+<p>For production robotics applications, simply dropping a sensor read into a <code class="docutils literal notranslate"><span class="pre">rclcpp::TimerBase</span></code> is insufficient. Hardware sensors can disconnect, drivers can crash, and I2C buses can lock up.</p>
 <p>This guide demonstrates how to integrate <code class="docutils literal notranslate"><span class="pre">libbno055-linux</span></code> using <strong>ROS 2 Lifecycle Nodes (Managed Nodes)</strong> and strict <strong>Quality of Service (QoS)</strong> profiles to build a truly fault-tolerant IMU driver.</p>
 <hr class="docutils" />
 <section id="the-lifecycle-node-state-machine-approach">
@@ -379,7 +379,7 @@ For high-frequency sensor streams (like IMUs running at 100Hz), using the defaul
 <h2>4. Building and Running the ROS 2 Examples<a class="headerlink" href="#building-and-running-the-ros-2-examples" title="Link to this heading">¶</a></h2>
 <p>The library comes with two pre-built ROS 2 node implementations in the <code class="docutils literal notranslate"><span class="pre">src/ros2/</span></code> directory:</p>
 <ul class="simple">
-<li><p><strong><code class="docutils literal notranslate"><span class="pre">bno055_publisher_node</span></code></strong>: A high-performance standalone ROS 2 publisher node optimized for zero-copy intra-process communication.</p></li>
+<li><p><strong><code class="docutils literal notranslate"><span class="pre">bno055_publisher_node</span></code></strong>: A standalone ROS 2 publisher node optimized for zero-copy intra-process communication.</p></li>
 <li><p><strong><code class="docutils literal notranslate"><span class="pre">bno055_lifecycle_publisher_node</span></code></strong>: A managed LifecycleNode that supports state transitions and low-power hardware state mapping.</p></li>
 </ul>
 <section id="prerequisites">
@@ -478,7 +478,7 @@ ros2<span class="w"> </span>lifecycle<span class="w"> </span><span class="nb">se
 <hr class="docutils" />
 <section id="linux-kernel-tuning-hardware-optimization-guide">
 <h2>5. Linux Kernel Tuning &amp; Hardware Optimization Guide<a class="headerlink" href="#linux-kernel-tuning-hardware-optimization-guide" title="Link to this heading">¶</a></h2>
-<p>To extract maximum performance and achieve deterministic execution for state estimation filters (such as EKF), you must eliminate latencies at both the hardware (I2C/UART bus) and OS kernel (scheduler jitter) levels.</p>
+<p>To minimize latency and achieve deterministic execution for state estimation filters (such as EKF), you must eliminate latencies at both the hardware (I2C/UART bus) and OS kernel (scheduler jitter) levels.</p>
 <section id="hardware-bus-speed-tuning">
 <h3>5.1. Hardware Bus Speed Tuning<a class="headerlink" href="#hardware-bus-speed-tuning" title="Link to this heading">¶</a></h3>
 <section id="a-overclocking-the-i2c-bus-fast-mode-400khz">
@@ -676,9 +676,9 @@ The raw burst request/response packets take <strong>~2.17 milliseconds</strong> 
 </section>
 </section>
 <hr class="docutils" />
-<section id="high-performance-read-modes-hardware-wiring">
-<h2>8. High-Performance Read Modes &amp; Hardware Wiring<a class="headerlink" href="#high-performance-read-modes-hardware-wiring" title="Link to this heading">¶</a></h2>
-<p>To enable the new high-performance features in standard C++ or ROS 2, you must select the appropriate <code class="docutils literal notranslate"><span class="pre">read_mode</span></code> parameter and configure the physical connections.</p>
+<section id="advanced-read-modes-hardware-wiring">
+<h2>8. Advanced Read Modes &amp; Hardware Wiring<a class="headerlink" href="#advanced-read-modes-hardware-wiring" title="Link to this heading">¶</a></h2>
+<p>To enable the new advanced features in standard C++ or ROS 2, you must select the appropriate <code class="docutils literal notranslate"><span class="pre">read_mode</span></code> parameter and configure the physical connections.</p>
 <section id="comparison-of-read-modes">
 <h3>8.1. Comparison of Read Modes<a class="headerlink" href="#comparison-of-read-modes" title="Link to this heading">¶</a></h3>
 <div class="table-wrapper colwidths-auto docutils container">
@@ -955,7 +955,7 @@ Modify your application launch parameters or ROS 2 YAML parameter file:</p>
 <li><a class="reference internal" href="#ros-2-launch-file-integration">6.2. ROS 2 Launch File Integration</a></li>
 </ul>
 </li>
-<li><a class="reference internal" href="#high-performance-read-modes-hardware-wiring">8. High-Performance Read Modes &amp; Hardware Wiring</a><ul>
+<li><a class="reference internal" href="#advanced-read-modes-hardware-wiring">8. Advanced Read Modes &amp; Hardware Wiring</a><ul>
 <li><a class="reference internal" href="#comparison-of-read-modes">8.1. Comparison of Read Modes</a></li>
 <li><a class="reference internal" href="#hardware-wiring-with-int-pin-support">8.2. Hardware Wiring (With INT Pin Support)</a><ul>
 <li><a class="reference internal" href="#i2c-wiring-table-e-g-raspberry-pi">I2C Wiring Table (e.g., Raspberry Pi)</a></li>

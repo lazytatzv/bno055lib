@@ -290,7 +290,7 @@
 </section>
 <section id="the-self-healing-state-machine">
 <h3>The Self-Healing State Machine<a class="headerlink" href="#the-self-healing-state-machine" title="Link to this heading">¶</a></h3>
-<p>To combat this, <code class="docutils literal notranslate"><span class="pre">libbno055-linux</span></code> implements a robust self-healing state machine. When the kernel reports an I2C timeout or physical disconnect, the library does not crash.</p>
+<p>To combat this, <code class="docutils literal notranslate"><span class="pre">libbno055-linux</span></code> implements a self-healing state machine. When the kernel reports an I2C timeout or physical disconnect, the library does not crash.</p>
 <div class="highlight-mermaid notranslate"><div class="highlight"><pre><span></span>stateDiagram-v2
     [*] --&gt; Idle
     Idle --&gt; ReadI2C : High-Frequency Polling
@@ -348,7 +348,7 @@
 <p>For robotics and high-frequency control loops executing on embedded Linux platforms (e.g., Raspberry Pi, BeagleBone ARM cores), floating-point math throughput is critical.</p>
 <ul class="simple">
 <li><p><strong>Single vs. Double Precision</strong>: Previous architectures utilized <code class="docutils literal notranslate"><span class="pre">double</span></code> (64-bit) for physical variables. However, ARM microcontrollers and application processors feature dedicated single-precision Hardware FPUs.</p></li>
-<li><p><strong>Performance Enhancements</strong>: All physical coordinates (<code class="docutils literal notranslate"><span class="pre">Vector3</span></code>), orientations (<code class="docutils literal notranslate"><span class="pre">Quaternion</span></code>), scale conversion factors, and Euler calculations (<code class="docutils literal notranslate"><span class="pre">toEulerDegrees</span></code>) are modified to use <code class="docutils literal notranslate"><span class="pre">float</span></code> (32-bit) type signatures.</p></li>
+<li><p><strong>Math Optimizations</strong>: All physical coordinates (<code class="docutils literal notranslate"><span class="pre">Vector3</span></code>), orientations (<code class="docutils literal notranslate"><span class="pre">Quaternion</span></code>), scale conversion factors, and Euler calculations (<code class="docutils literal notranslate"><span class="pre">toEulerDegrees</span></code>) are modified to use <code class="docutils literal notranslate"><span class="pre">float</span></code> (32-bit) type signatures.</p></li>
 <li><p><strong>Result</strong>: Enables vectorization optimization and lowers CPU cycle consumption during raw IMU parsing and rotation conversions.</p></li>
 </ul>
 </section>

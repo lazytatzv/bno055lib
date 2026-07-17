@@ -255,19 +255,19 @@
 <li><p><strong>Native I2C &amp; UART Support</strong>: Fully implements the BNO055 binary protocol for both I2C (<code class="docutils literal notranslate"><span class="pre">/dev/i2c-*</span></code>) and USB-to-UART (<code class="docutils literal notranslate"><span class="pre">/dev/ttyUSB*</span></code>) using fast, low-level POSIX APIs.</p></li>
 <li><p><strong>Full Telemetry Parity</strong>: Publishes standard IMU data, raw unfiltered data (<code class="docutils literal notranslate"><span class="pre">imu/raw</span></code>), gravity vectors (<code class="docutils literal notranslate"><span class="pre">imu/gravity</span></code>), and calibration status via JSON (<code class="docutils literal notranslate"><span class="pre">~/calib_status</span></code>) and <code class="docutils literal notranslate"><span class="pre">diagnostic_msgs::msg::DiagnosticStatus</span></code> (<code class="docutils literal notranslate"><span class="pre">~/status</span></code>).</p></li>
 <li><p><strong>Hardware Reset &amp; Calibration Services</strong>: Provides <code class="docutils literal notranslate"><span class="pre">~/reset</span></code> for software-triggered hardware resets and <code class="docutils literal notranslate"><span class="pre">~/calibration_request</span></code> for dynamic calibration state queries.</p></li>
-<li><p><strong>ROS 2 nodes</strong>: Provides high-performance standard and lifecycle node interfaces.</p></li>
+<li><p><strong>ROS 2 nodes</strong>: Provides standard and lifecycle node interfaces.</p></li>
 <li><p><strong>Automatic Recovery</strong>: Implements automatic recovery for <code class="docutils literal notranslate"><span class="pre">EIO</span></code> faults, clock stretching issues, and UART <code class="docutils literal notranslate"><span class="pre">BUS_OVER_RUN</span></code> errors.</p></li>
 <li><p><strong>No heap allocations</strong>: Avoids dynamic memory allocation in hot sensor readout paths.</p></li>
 <li><p><strong>Zero-copy publishers</strong>: Implements zero-copy memory transport (<code class="docutils literal notranslate"><span class="pre">std::unique_ptr</span></code>) for ROS 2 publishers.</p></li>
 <li><p><strong>Built-in I2C mocking</strong>: Provides built-in I2C mocking for compilation and testing on macOS/Windows.</p></li>
-<li><p><strong>High-Performance EKF Burst Read (New)</strong>: Sequentially reads 18 bytes of raw sensor outputs (Accel, Mag, Gyro) in a single transaction, reducing bus latency by 3x.</p></li>
+<li><p><strong>18-Byte Burst Read (New)</strong>: Sequentially reads 18 bytes of raw sensor outputs (Accel, Mag, Gyro) in a single transaction, reducing bus latency by 3x.</p></li>
 <li><p><strong>Linux GPIO Interrupt (IRQ) Driven Mode (New)</strong>: Bypasses polling loops. Detects rising edge events on the physical INT pin using Linux <code class="docutils literal notranslate"><span class="pre">poll()</span></code>, triggering callbacks at sub-millisecond latency.</p></li>
 <li><p><strong>Single-Precision float Optimizations (New)</strong>: Swapped double-precision floats to 32-bit floats across all vectors and quaternion math to unlock hardware FPU speeds on ARM processors (e.g., Raspberry Pi).</p></li>
 </ul>
 </section>
 <hr class="docutils" />
-<section id="high-performance-state-estimation-ekf-features">
-<h2>High-Performance &amp; State Estimation (EKF) Features<a class="headerlink" href="#high-performance-state-estimation-ekf-features" title="Link to this heading">¶</a></h2>
+<section id="burst-read-state-estimation-ekf-features">
+<h2>Burst Read &amp; State Estimation (EKF) Features<a class="headerlink" href="#burst-read-state-estimation-ekf-features" title="Link to this heading">¶</a></h2>
 <p>If you are developing a custom state estimator (Extended Kalman Filter / Complementary Filter) or using <strong><code class="docutils literal notranslate"><span class="pre">robot_localization</span></code></strong>, raw sensor throughput and latency determinism are critical.</p>
 <p><code class="docutils literal notranslate"><span class="pre">libbno055-linux</span></code> provides:</p>
 <ol class="arabic simple">
@@ -373,7 +373,7 @@ colcon<span class="w"> </span>build<span class="w"> </span>--packages-select<spa
 </div>
 </li>
 <li><p><strong>Launch with Parameters</strong>:
-Launch the high-performance zero-copy node (default) or the lifecycle node:</p>
+Launch the zero-copy node (default) or the lifecycle node:</p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>ros2<span class="w"> </span>launch<span class="w"> </span>libbno055_linux<span class="w"> </span>bno055_launch.py
 </pre></div>
 </div>
@@ -637,7 +637,7 @@ Launch the high-performance zero-copy node (default) or the lifecycle node:</p>
             <ul>
 <li><a class="reference internal" href="#">libbno055-linux</a><ul>
 <li><a class="reference internal" href="#features">Features</a></li>
-<li><a class="reference internal" href="#high-performance-state-estimation-ekf-features">High-Performance &amp; State Estimation (EKF) Features</a></li>
+<li><a class="reference internal" href="#burst-read-state-estimation-ekf-features">Burst Read &amp; State Estimation (EKF) Features</a></li>
 <li><a class="reference internal" href="#quick-start">Quick Start</a><ul>
 <li><a class="reference internal" href="#a-standalone-c-no-ros">A. Standalone C++ (No-ROS)</a></li>
 <li><a class="reference internal" href="#b-ros-2-colcon-workspace">B. ROS 2 (colcon workspace)</a></li>
