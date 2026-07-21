@@ -897,6 +897,7 @@ Returns internal telemetry tracking auto-reconnects and dropped frames.</p></li>
 </ul>
 </li>
 <li><p><strong><code class="docutils literal notranslate"><span class="pre">pub</span> <span class="pre">struct</span> <span class="pre">Diagnostics</span> <span class="pre">{</span> <span class="pre">pub</span> <span class="pre">write_failures:</span> <span class="pre">u32,</span> <span class="pre">pub</span> <span class="pre">read_failures:</span> <span class="pre">u32,</span> <span class="pre">pub</span> <span class="pre">reconnect_attempts:</span> <span class="pre">u32</span> <span class="pre">}</span></code></strong></p></li>
+<li><p><strong><code class="docutils literal notranslate"><span class="pre">pub</span> <span class="pre">struct</span> <span class="pre">RawSensorData</span> <span class="pre">{</span> <span class="pre">pub</span> <span class="pre">accel:</span> <span class="pre">Vector3,</span> <span class="pre">pub</span> <span class="pre">mag:</span> <span class="pre">Vector3,</span> <span class="pre">pub</span> <span class="pre">gyro:</span> <span class="pre">Vector3</span> <span class="pre">}</span></code></strong></p></li>
 <li><p><strong><code class="docutils literal notranslate"><span class="pre">pub</span> <span class="pre">enum</span> <span class="pre">OpMode</span></code></strong>: Includes variants like <code class="docutils literal notranslate"><span class="pre">Config</span></code>, <code class="docutils literal notranslate"><span class="pre">AccOnly</span></code>, <code class="docutils literal notranslate"><span class="pre">IMUPlus</span></code>, <code class="docutils literal notranslate"><span class="pre">NDOF</span></code>, etc.</p></li>
 </ul>
 </section>
@@ -932,6 +933,8 @@ Issues a software reset to the IMU and restores the current configuration.</p></
 <li><p><strong><code class="docutils literal notranslate"><span class="pre">pub</span> <span class="pre">fn</span> <span class="pre">get_gravity(&amp;mut</span> <span class="pre">self)</span> <span class="pre">-&gt;</span> <span class="pre">Option&lt;Vector3&gt;</span></code></strong></p></li>
 <li><p><strong><code class="docutils literal notranslate"><span class="pre">pub</span> <span class="pre">fn</span> <span class="pre">get_quaternion(&amp;mut</span> <span class="pre">self)</span> <span class="pre">-&gt;</span> <span class="pre">Option&lt;Quaternion&gt;</span></code></strong></p></li>
 <li><p><strong><code class="docutils literal notranslate"><span class="pre">pub</span> <span class="pre">fn</span> <span class="pre">get_temperature(&amp;mut</span> <span class="pre">self)</span> <span class="pre">-&gt;</span> <span class="pre">Option&lt;i8&gt;</span></code></strong></p></li>
+<li><p><strong><code class="docutils literal notranslate"><span class="pre">pub</span> <span class="pre">fn</span> <span class="pre">get_raw_sensor_data(&amp;mut</span> <span class="pre">self)</span> <span class="pre">-&gt;</span> <span class="pre">Option&lt;RawSensorData&gt;</span></code></strong>
+<em>(Highly Optimized)</em> Reads all 9-axis raw values in a single 18-byte I2C burst transaction (utilizes <code class="docutils literal notranslate"><span class="pre">I2C_RDWR</span></code> if available).</p></li>
 </ul>
 </section>
 <section id="id3">
