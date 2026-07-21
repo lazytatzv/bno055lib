@@ -262,7 +262,8 @@ Saving 22 bytes of calibration data to the Linux filesystem requires blocking th
 </ol>
 <p>Once the sensor reports it is fully calibrated (<code class="docutils literal notranslate"><span class="pre">isFullyCalibrated()</span> <span class="pre">==</span> <span class="pre">true</span></code>), manually trigger the save function to write <code class="docutils literal notranslate"><span class="pre">master_calib.bin</span></code>.</p>
 <ul class="simple">
-<li><p><strong>C++/Python/Rust</strong>: Call <code class="docutils literal notranslate"><span class="pre">imu.saveCalibrationFile(&quot;master_calib.bin&quot;)</span></code>.</p></li>
+<li><p><strong>C++</strong>: Call <code class="docutils literal notranslate"><span class="pre">imu.saveCalibrationFile(&quot;master_calib.bin&quot;)</span></code>.</p></li>
+<li><p><strong>Python</strong>: Call <code class="docutils literal notranslate"><span class="pre">imu.save_calibration_file(&quot;master_calib.bin&quot;)</span></code>.</p></li>
 <li><p><strong>ROS 2</strong>: Call the <code class="docutils literal notranslate"><span class="pre">~/save_calibration</span></code> service (<code class="docutils literal notranslate"><span class="pre">ros2</span> <span class="pre">service</span> <span class="pre">call</span> <span class="pre">/bno055/save_calibration</span> <span class="pre">std_srvs/srv/Trigger</span></code>).</p></li>
 </ul>
 </section>
@@ -270,7 +271,8 @@ Saving 22 bytes of calibration data to the Linux filesystem requires blocking th
 <h4>Online (Production Phase)<a class="headerlink" href="#online-production-phase" title="Link to this heading">¶</a></h4>
 <p>On production startup, simply load the master file into the sensor. The BNO055 will use this as a highly accurate baseline.</p>
 <ul class="simple">
-<li><p><strong>C++/Python/Rust</strong>: Call <code class="docutils literal notranslate"><span class="pre">imu.loadCalibrationFile(&quot;master_calib.bin&quot;)</span></code>.</p></li>
+<li><p><strong>C++</strong>: Call <code class="docutils literal notranslate"><span class="pre">imu.loadCalibrationFile(&quot;master_calib.bin&quot;)</span></code>.</p></li>
+<li><p><strong>Python</strong>: Call <code class="docutils literal notranslate"><span class="pre">imu.load_calibration_file(&quot;master_calib.bin&quot;)</span></code>.</p></li>
 <li><p><strong>ROS 2</strong>: Set the <code class="docutils literal notranslate"><span class="pre">calibration_file</span></code> parameter in your launch file or <code class="docutils literal notranslate"><span class="pre">params.yaml</span></code>. The node will automatically load it on startup.</p></li>
 </ul>
 </section>
@@ -289,6 +291,12 @@ Saving 22 bytes of calibration data to the Linux filesystem requires blocking th
 <span class="k">auto</span><span class="w"> </span><span class="n">offsets</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">imu</span><span class="p">.</span><span class="n">getSensorOffsets</span><span class="p">();</span>
 <span class="c1">// ...</span>
 <span class="n">imu</span><span class="p">.</span><span class="n">setSensorOffsets</span><span class="p">(</span><span class="n">offsets</span><span class="p">);</span>
+</pre></div>
+</div>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Python</span>
+<span class="n">offsets</span> <span class="o">=</span> <span class="n">imu</span><span class="o">.</span><span class="n">get_sensor_offsets</span><span class="p">()</span> <span class="c1"># Returns a list of 22 bytes</span>
+<span class="c1"># ...</span>
+<span class="n">imu</span><span class="o">.</span><span class="n">set_sensor_offsets</span><span class="p">(</span><span class="n">offsets</span><span class="p">)</span>
 </pre></div>
 </div>
 <p>The driver automatically handles the strict requirement of temporarily switching to <code class="docutils literal notranslate"><span class="pre">CONFIG</span></code> mode to access the offset registers, meaning you don’t have to write error-prone sleep or mode-switching logic yourself.</p>
