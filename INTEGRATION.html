@@ -6,7 +6,7 @@
 <link rel="index" title="Index" href="genindex.html"><link rel="search" title="Search" href="search.html"><link rel="next" title="Sensor Overview and Operation Modes" href="SENSOR_OVERVIEW.html"><link rel="prev" title="Architecture and Design Decisions" href="ARCHITECTURE.html">
 
     <!-- Generated with Sphinx 8.1.3 and Furo 2025.12.19 -->
-        <title>Advanced ROS 2 Integration Guide - libbno055-linux 1.5.1 documentation</title>
+        <title>Advanced ROS 2 Integration Guide - libbno055-linux 1.5.2 documentation</title>
       <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=d111a655" />
     <link rel="stylesheet" type="text/css" href="_static/styles/furo.css?v=7bdb33bb" />
     <link rel="stylesheet" type="text/css" href="_static/styles/furo-extensions.css?v=8dab3a3b" />
@@ -161,7 +161,7 @@
       </label>
     </div>
     <div class="header-center">
-      <a href="index.html"><div class="brand">libbno055-linux 1.5.1 documentation</div></a>
+      <a href="index.html"><div class="brand">libbno055-linux 1.5.2 documentation</div></a>
     </div>
     <div class="header-right">
       <div class="theme-toggle-container theme-toggle-header">
@@ -182,7 +182,7 @@
       
       <div class="sidebar-sticky"><a class="sidebar-brand" href="index.html">
   
-  <span class="sidebar-brand-text">libbno055-linux 1.5.1 documentation</span>
+  <span class="sidebar-brand-text">libbno055-linux 1.5.2 documentation</span>
   
 </a><form class="sidebar-search-container" method="get" action="search.html" role="search">
   <input class="sidebar-search" placeholder="Search" name="q" aria-label="Search">
@@ -867,6 +867,81 @@ Modify your application launch parameters or ROS 2 YAML parameter file:</p>
 </ul>
 </section>
 </section>
+<hr class="docutils" />
+<section id="rust-integration-guide-use-libbno055">
+<h2>10. Rust Integration Guide (<code class="docutils literal notranslate"><span class="pre">use</span> <span class="pre">libbno055</span></code>)<a class="headerlink" href="#rust-integration-guide-use-libbno055" title="Link to this heading">¶</a></h2>
+<p>To integrate the BNO055 driver into a Rust application or robotic control loop:</p>
+<section id="add-libbno055-dependency">
+<h3>10.1. Add <code class="docutils literal notranslate"><span class="pre">libbno055</span></code> Dependency<a class="headerlink" href="#add-libbno055-dependency" title="Link to this heading">¶</a></h3>
+<p>Add <code class="docutils literal notranslate"><span class="pre">libbno055</span></code> to your <code class="docutils literal notranslate"><span class="pre">Cargo.toml</span></code> via <code class="docutils literal notranslate"><span class="pre">cargo</span> <span class="pre">add</span></code>:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>cargo<span class="w"> </span>add<span class="w"> </span>libbno055
+</pre></div>
+</div>
+<p>Or declare it directly in <code class="docutils literal notranslate"><span class="pre">Cargo.toml</span></code>:</p>
+<div class="highlight-toml notranslate"><div class="highlight"><pre><span></span><span class="k">[dependencies]</span>
+<span class="n">libbno055</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;1.5.1&quot;</span>
+</pre></div>
+</div>
+</section>
+<section id="production-control-loop-example-rust">
+<h3>10.2. Production Control Loop Example (Rust)<a class="headerlink" href="#production-control-loop-example-rust" title="Link to this heading">¶</a></h3>
+<div class="highlight-rust notranslate"><div class="highlight"><pre><span></span><span class="k">use</span><span class="w"> </span><span class="n">libbno055</span><span class="p">::{</span><span class="n">BNO055</span><span class="p">,</span><span class="w"> </span><span class="n">OpMode</span><span class="p">,</span><span class="w"> </span><span class="n">Quaternion</span><span class="p">};</span>
+<span class="k">use</span><span class="w"> </span><span class="n">std</span><span class="p">::</span><span class="n">thread</span><span class="p">;</span>
+<span class="k">use</span><span class="w"> </span><span class="n">std</span><span class="p">::</span><span class="n">time</span><span class="p">::</span><span class="n">Duration</span><span class="p">;</span>
+
+<span class="k">fn</span><span class="w"> </span><span class="nf">main</span><span class="p">()</span><span class="w"> </span><span class="p">-&gt;</span><span class="w"> </span><span class="nb">Result</span><span class="o">&lt;</span><span class="p">(),</span><span class="w"> </span><span class="o">&amp;&#39;</span><span class="nb">static</span><span class="w"> </span><span class="kt">str</span><span class="o">&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="c1">// 1. Initialize IMU via I2C (Address 0x28, /dev/i2c-1)</span>
+<span class="w">    </span><span class="kd">let</span><span class="w"> </span><span class="k">mut</span><span class="w"> </span><span class="n">imu</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">BNO055</span><span class="p">::</span><span class="n">new_i2c</span><span class="p">(</span><span class="mh">0x28</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;/dev/i2c-1&quot;</span><span class="p">)</span><span class="o">?</span><span class="p">;</span>
+
+<span class="w">    </span><span class="c1">// OR Initialize via USB-to-UART bridge</span>
+<span class="w">    </span><span class="c1">// let mut imu = BNO055::new_uart(&quot;/dev/ttyUSB0&quot;, 115200)?;</span>
+
+<span class="w">    </span><span class="c1">// 2. Boot sensor into NDOF 9-DOF Fusion mode</span>
+<span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="o">!</span><span class="n">imu</span><span class="p">.</span><span class="n">begin</span><span class="p">(</span><span class="n">OpMode</span><span class="p">::</span><span class="n">NDOF</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="fm">eprintln!</span><span class="p">(</span><span class="s">&quot;Failed to initialize BNO055 sensor over I2C!&quot;</span><span class="p">);</span>
+<span class="w">        </span><span class="k">return</span><span class="w"> </span><span class="nb">Err</span><span class="p">(</span><span class="s">&quot;IMU Init Failed&quot;</span><span class="p">);</span>
+<span class="w">    </span><span class="p">}</span>
+
+<span class="w">    </span><span class="fm">println!</span><span class="p">(</span><span class="s">&quot;BNO055 Initialized Successfully in NDOF mode.&quot;</span><span class="p">);</span>
+
+<span class="w">    </span><span class="c1">// 3. High-rate Control Loop (100Hz)</span>
+<span class="w">    </span><span class="k">for</span><span class="w"> </span><span class="n">_</span><span class="w"> </span><span class="k">in</span><span class="w"> </span><span class="mi">0</span><span class="o">..</span><span class="mi">100</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="c1">// Read Orientation Quaternion &amp; Convert to Euler Angles (Degrees)</span>
+<span class="w">        </span><span class="k">if</span><span class="w"> </span><span class="kd">let</span><span class="w"> </span><span class="nb">Some</span><span class="p">(</span><span class="n">q</span><span class="p">)</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">imu</span><span class="p">.</span><span class="n">get_quaternion</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
+<span class="w">            </span><span class="kd">let</span><span class="w"> </span><span class="n">euler</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">BNO055</span><span class="p">::</span><span class="n">to_euler_degrees</span><span class="p">(</span><span class="o">&amp;</span><span class="n">q</span><span class="p">);</span>
+<span class="w">            </span><span class="fm">println!</span><span class="p">(</span><span class="s">&quot;Euler (deg): Roll={:.2}, Pitch={:.2}, Yaw={:.2}&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">euler</span><span class="p">.</span><span class="n">x</span><span class="p">,</span><span class="w"> </span><span class="n">euler</span><span class="p">.</span><span class="n">y</span><span class="p">,</span><span class="w"> </span><span class="n">euler</span><span class="p">.</span><span class="n">z</span><span class="p">);</span>
+<span class="w">        </span><span class="p">}</span>
+
+<span class="w">        </span><span class="c1">// Read Raw Linear Acceleration (m/s^2)</span>
+<span class="w">        </span><span class="k">if</span><span class="w"> </span><span class="kd">let</span><span class="w"> </span><span class="nb">Some</span><span class="p">(</span><span class="n">acc</span><span class="p">)</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">imu</span><span class="p">.</span><span class="n">get_accelerometer</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
+<span class="w">            </span><span class="fm">println!</span><span class="p">(</span><span class="s">&quot;Accel (m/s^2): X={:.2}, Y={:.2}, Z={:.2}&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">acc</span><span class="p">.</span><span class="n">x</span><span class="p">,</span><span class="w"> </span><span class="n">acc</span><span class="p">.</span><span class="n">y</span><span class="p">,</span><span class="w"> </span><span class="n">acc</span><span class="p">.</span><span class="n">z</span><span class="p">);</span>
+<span class="w">        </span><span class="p">}</span>
+
+<span class="w">        </span><span class="c1">// Check Hardware Calibration Status (0 = Uncalibrated, 3 = Fully Calibrated)</span>
+<span class="w">        </span><span class="k">if</span><span class="w"> </span><span class="kd">let</span><span class="w"> </span><span class="nb">Some</span><span class="p">(</span><span class="n">calib</span><span class="p">)</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">imu</span><span class="p">.</span><span class="n">get_calibration_status</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
+<span class="w">            </span><span class="fm">println!</span><span class="p">(</span><span class="s">&quot;Calibration: SYS={}, GYRO={}, ACCEL={}, MAG={}&quot;</span><span class="p">,</span><span class="w"> </span>
+<span class="w">                     </span><span class="n">calib</span><span class="p">.</span><span class="n">sys</span><span class="p">,</span><span class="w"> </span><span class="n">calib</span><span class="p">.</span><span class="n">gyro</span><span class="p">,</span><span class="w"> </span><span class="n">calib</span><span class="p">.</span><span class="n">accel</span><span class="p">,</span><span class="w"> </span><span class="n">calib</span><span class="p">.</span><span class="n">mag</span><span class="p">);</span>
+<span class="w">            </span><span class="k">if</span><span class="w"> </span><span class="n">calib</span><span class="p">.</span><span class="n">is_fully_calibrated</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
+<span class="w">                </span><span class="fm">println!</span><span class="p">(</span><span class="s">&quot;System reaches full calibration!&quot;</span><span class="p">);</span>
+<span class="w">            </span><span class="p">}</span>
+<span class="w">        </span><span class="p">}</span>
+
+<span class="w">        </span><span class="c1">// Monitor Bus Telemetry Health</span>
+<span class="w">        </span><span class="kd">let</span><span class="w"> </span><span class="n">diag</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">imu</span><span class="p">.</span><span class="n">get_diagnostics</span><span class="p">();</span>
+<span class="w">        </span><span class="k">if</span><span class="w"> </span><span class="n">diag</span><span class="p">.</span><span class="n">reconnect_attempts</span><span class="w"> </span><span class="o">&gt;</span><span class="w"> </span><span class="mi">0</span><span class="w"> </span><span class="o">||</span><span class="w"> </span><span class="n">diag</span><span class="p">.</span><span class="n">read_failures</span><span class="w"> </span><span class="o">&gt;</span><span class="w"> </span><span class="mi">0</span><span class="w"> </span><span class="p">{</span>
+<span class="w">            </span><span class="fm">println!</span><span class="p">(</span><span class="s">&quot;Telemetry: Reconnects={}, WriteFailures={}, ReadFailures={}&quot;</span><span class="p">,</span>
+<span class="w">                     </span><span class="n">diag</span><span class="p">.</span><span class="n">reconnect_attempts</span><span class="p">,</span><span class="w"> </span><span class="n">diag</span><span class="p">.</span><span class="n">write_failures</span><span class="p">,</span><span class="w"> </span><span class="n">diag</span><span class="p">.</span><span class="n">read_failures</span><span class="p">);</span>
+<span class="w">        </span><span class="p">}</span>
+
+<span class="w">        </span><span class="n">thread</span><span class="p">::</span><span class="n">sleep</span><span class="p">(</span><span class="n">Duration</span><span class="p">::</span><span class="n">from_millis</span><span class="p">(</span><span class="mi">10</span><span class="p">));</span><span class="w"> </span><span class="c1">// 100Hz period</span>
+<span class="w">    </span><span class="p">}</span>
+
+<span class="w">    </span><span class="nb">Ok</span><span class="p">(())</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+</section>
+</section>
 </section>
 
         </article>
@@ -979,6 +1054,11 @@ Modify your application launch parameters or ROS 2 YAML parameter file:</p>
 <li><a class="reference internal" href="#physical-sub-sensor-overclocking-1khz-accel-2khz-gyro-odr">9.4. Physical Sub-Sensor Overclocking (1kHz Accel / 2kHz Gyro ODR)</a></li>
 </ul>
 </li>
+<li><a class="reference internal" href="#rust-integration-guide-use-libbno055">10. Rust Integration Guide (<code class="docutils literal notranslate"><span class="pre">use</span> <span class="pre">libbno055</span></code>)</a><ul>
+<li><a class="reference internal" href="#add-libbno055-dependency">10.1. Add <code class="docutils literal notranslate"><span class="pre">libbno055</span></code> Dependency</a></li>
+<li><a class="reference internal" href="#production-control-loop-example-rust">10.2. Production Control Loop Example (Rust)</a></li>
+</ul>
+</li>
 </ul>
 </li>
 </ul>
@@ -990,7 +1070,7 @@ Modify your application launch parameters or ROS 2 YAML parameter file:</p>
       
     </aside>
   </div>
-</div><script src="_static/documentation_options.js?v=44dfd65d"></script>
+</div><script src="_static/documentation_options.js?v=73275c37"></script>
     <script src="_static/doctools.js?v=9bcbadda"></script>
     <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="_static/scripts/furo.js?v=46bd48cc"></script>
