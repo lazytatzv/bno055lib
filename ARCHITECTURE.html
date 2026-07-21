@@ -6,7 +6,7 @@
 <link rel="index" title="Index" href="genindex.html"><link rel="search" title="Search" href="search.html"><link rel="next" title="Advanced ROS 2 Integration Guide" href="INTEGRATION.html"><link rel="prev" title="libbno055-linux" href="README.html">
 
     <!-- Generated with Sphinx 8.1.3 and Furo 2025.12.19 -->
-        <title>Architecture and Design Decisions - libbno055-linux 1.4.1 documentation</title>
+        <title>Architecture and Design Decisions - libbno055-linux 1.5.0 documentation</title>
       <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=d111a655" />
     <link rel="stylesheet" type="text/css" href="_static/styles/furo.css?v=7bdb33bb" />
     <link rel="stylesheet" type="text/css" href="_static/styles/furo-extensions.css?v=8dab3a3b" />
@@ -161,7 +161,7 @@
       </label>
     </div>
     <div class="header-center">
-      <a href="index.html"><div class="brand">libbno055-linux 1.4.1 documentation</div></a>
+      <a href="index.html"><div class="brand">libbno055-linux 1.5.0 documentation</div></a>
     </div>
     <div class="header-right">
       <div class="theme-toggle-container theme-toggle-header">
@@ -182,7 +182,7 @@
       
       <div class="sidebar-sticky"><a class="sidebar-brand" href="index.html">
   
-  <span class="sidebar-brand-text">libbno055-linux 1.4.1 documentation</span>
+  <span class="sidebar-brand-text">libbno055-linux 1.5.0 documentation</span>
   
 </a><form class="sidebar-search-container" method="get" action="search.html" role="search">
   <input class="sidebar-search" placeholder="Search" name="q" aria-label="Search">
@@ -391,6 +391,34 @@
 </ul>
 </section>
 </section>
+<hr class="docutils" />
+<section id="multi-language-binding-architecture">
+<h2>9. Multi-Language Binding Architecture<a class="headerlink" href="#multi-language-binding-architecture" title="Link to this heading">¶</a></h2>
+<p>To support modern polyglot robotics stacks, <code class="docutils literal notranslate"><span class="pre">libbno055-linux</span></code> implements a layered binding architecture:</p>
+<div class="highlight-mermaid notranslate"><div class="highlight"><pre><span></span>flowchart TD
+    subgraph Core C++ Engine
+        CPP[&quot;C++17 BNO055 Core (bno055lib::BNO055)&quot;]
+    end
+    
+    subgraph Language Interfaces
+        C_API[&quot;C ABI Layer (bno055_c.h / bno055_c.cpp)&quot;]
+        PY_BIND[&quot;Pybind11 C-Extension (import libbno055)&quot;]
+        RUST_CRATE[&quot;Safe Rust Crate (use libbno055)&quot;]
+        ROS2_NODES[&quot;ROS 2 C++ / Python Nodes&quot;]
+    end
+    
+    CPP --&gt; C_API
+    CPP --&gt; PY_BIND
+    C_API --&gt; RUST_CRATE
+    CPP --&gt; ROS2_NODES
+</pre></div>
+</div>
+<ul class="simple">
+<li><p><strong>C ABI Layer (<code class="docutils literal notranslate"><span class="pre">bno055_c.h</span></code>)</strong>: Provides opaque <code class="docutils literal notranslate"><span class="pre">bno055_handle_t</span></code> pointers and pure C structs (<code class="docutils literal notranslate"><span class="pre">bno055_vector3_t</span></code>, <code class="docutils literal notranslate"><span class="pre">bno055_quaternion_t</span></code>), allowing C, Rust, Go, Zig, and FFI wrappers to interoperate with zero memory overhead.</p></li>
+<li><p><strong>Pybind11 C-Extension (<code class="docutils literal notranslate"><span class="pre">import</span> <span class="pre">libbno055</span></code>)</strong>: Exposes native C++ classes to Python with zero GIL blocking during sensor readouts.</p></li>
+<li><p><strong>Safe Rust Crate (<code class="docutils literal notranslate"><span class="pre">use</span> <span class="pre">libbno055</span></code>)</strong>: Wraps C ABI calls behind safe Rust idioms, automatic <code class="docutils literal notranslate"><span class="pre">Drop</span></code> RAII cleanup, and <code class="docutils literal notranslate"><span class="pre">Send</span></code> thread safety guarantees.</p></li>
+</ul>
+</section>
 </section>
 
         </article>
@@ -472,6 +500,7 @@
 <li><a class="reference internal" href="#managed-lifecycle-node-bno055-lifecycle-publisher-node">Managed Lifecycle Node (<code class="docutils literal notranslate"><span class="pre">bno055_lifecycle_publisher_node</span></code>)</a></li>
 </ul>
 </li>
+<li><a class="reference internal" href="#multi-language-binding-architecture">9. Multi-Language Binding Architecture</a></li>
 </ul>
 </li>
 </ul>
@@ -483,7 +512,7 @@
       
     </aside>
   </div>
-</div><script src="_static/documentation_options.js?v=350a9c04"></script>
+</div><script src="_static/documentation_options.js?v=e0a75244"></script>
     <script src="_static/doctools.js?v=9bcbadda"></script>
     <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="_static/scripts/furo.js?v=46bd48cc"></script>

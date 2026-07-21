@@ -6,7 +6,7 @@
 <link rel="index" title="Index" href="genindex.html"><link rel="search" title="Search" href="search.html"><link rel="next" title="Sensor Overview and Operation Modes" href="SENSOR_OVERVIEW.html"><link rel="prev" title="Architecture and Design Decisions" href="ARCHITECTURE.html">
 
     <!-- Generated with Sphinx 8.1.3 and Furo 2025.12.19 -->
-        <title>Advanced ROS 2 Integration Guide - libbno055-linux 1.4.1 documentation</title>
+        <title>Advanced ROS 2 Integration Guide - libbno055-linux 1.5.0 documentation</title>
       <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=d111a655" />
     <link rel="stylesheet" type="text/css" href="_static/styles/furo.css?v=7bdb33bb" />
     <link rel="stylesheet" type="text/css" href="_static/styles/furo-extensions.css?v=8dab3a3b" />
@@ -161,7 +161,7 @@
       </label>
     </div>
     <div class="header-center">
-      <a href="index.html"><div class="brand">libbno055-linux 1.4.1 documentation</div></a>
+      <a href="index.html"><div class="brand">libbno055-linux 1.5.0 documentation</div></a>
     </div>
     <div class="header-right">
       <div class="theme-toggle-container theme-toggle-header">
@@ -182,7 +182,7 @@
       
       <div class="sidebar-sticky"><a class="sidebar-brand" href="index.html">
   
-  <span class="sidebar-brand-text">libbno055-linux 1.4.1 documentation</span>
+  <span class="sidebar-brand-text">libbno055-linux 1.5.0 documentation</span>
   
 </a><form class="sidebar-search-container" method="get" action="search.html" role="search">
   <input class="sidebar-search" placeholder="Search" name="q" aria-label="Search">
@@ -385,12 +385,20 @@ For high-frequency sensor streams (like IMUs running at 100Hz), using the defaul
 <section id="prerequisites">
 <h3>4.1. Prerequisites<a class="headerlink" href="#prerequisites" title="Link to this heading">¶</a></h3>
 <p>Ensure you have ROS 2 (e.g., Humble, Jazzy) installed and sourced in your terminal:</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">source</span><span class="w"> </span>/opt/ros/humble/setup.bash
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1">### 4.2. Binary Installation (via `apt`)</span>
+
+If<span class="w"> </span>you<span class="w"> </span>are<span class="w"> </span>using<span class="w"> </span>binary<span class="w"> </span>ROS<span class="w"> </span><span class="m">2</span><span class="w"> </span>releases,<span class="w"> </span>you<span class="w"> </span>can<span class="w"> </span>install<span class="w"> </span>pre-compiled<span class="w"> </span>packages<span class="w"> </span>directly<span class="w"> </span>using<span class="w"> </span><span class="sb">`</span>apt<span class="sb">`</span>:
+
+<span class="sb">```</span>bash
+sudo<span class="w"> </span>apt<span class="w"> </span>update
+sudo<span class="w"> </span>apt<span class="w"> </span>install<span class="w"> </span>ros-<span class="si">${</span><span class="nv">ROS_DISTRO</span><span class="si">}</span>-libbno055-linux
+<span class="c1"># For example, on ROS 2 Humble:</span>
+<span class="c1"># sudo apt install ros-humble-libbno055-linux</span>
 </pre></div>
 </div>
 </section>
 <section id="building-inside-a-ros-2-workspace">
-<h3>4.2. Building inside a ROS 2 Workspace<a class="headerlink" href="#building-inside-a-ros-2-workspace" title="Link to this heading">¶</a></h3>
+<h3>4.3. Building inside a ROS 2 Workspace<a class="headerlink" href="#building-inside-a-ros-2-workspace" title="Link to this heading">¶</a></h3>
 <p>Since this repository contains a <code class="docutils literal notranslate"><span class="pre">package.xml</span></code>, it is compatible with <code class="docutils literal notranslate"><span class="pre">colcon</span></code> and can be built directly inside a ROS 2 workspace.</p>
 <ol class="arabic">
 <li><p>Create a workspace directory (if you do not have one):</p>
@@ -419,7 +427,7 @@ rosdep<span class="w"> </span>install<span class="w"> </span>--from-paths<span c
 </ol>
 </section>
 <section id="running-the-nodes">
-<h3>4.3. Running the Nodes<a class="headerlink" href="#running-the-nodes" title="Link to this heading">¶</a></h3>
+<h3>4.4. Running the Nodes<a class="headerlink" href="#running-the-nodes" title="Link to this heading">¶</a></h3>
 <p>You can launch and configure the nodes using the provided launch file and parameters YAML file.</p>
 <section id="a-launching-via-launch-file-recommended">
 <h4>A. Launching via Launch File (Recommended)<a class="headerlink" href="#a-launching-via-launch-file-recommended" title="Link to this heading">¶</a></h4>
@@ -468,7 +476,7 @@ ros2<span class="w"> </span>lifecycle<span class="w"> </span><span class="nb">se
 </section>
 </section>
 <section id="verification">
-<h3>4.4. Verification<a class="headerlink" href="#verification" title="Link to this heading">¶</a></h3>
+<h3>4.5. Verification<a class="headerlink" href="#verification" title="Link to this heading">¶</a></h3>
 <p>Verify that the IMU data is streaming correctly:</p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>ros2<span class="w"> </span>topic<span class="w"> </span><span class="nb">echo</span><span class="w"> </span>/imu/data
 </pre></div>
@@ -922,13 +930,13 @@ Modify your application launch parameters or ROS 2 YAML parameter file:</p>
 <li><a class="reference internal" href="#registering-with-rosdep">3. Registering with rosdep</a></li>
 <li><a class="reference internal" href="#building-and-running-the-ros-2-examples">4. Building and Running the ROS 2 Examples</a><ul>
 <li><a class="reference internal" href="#prerequisites">4.1. Prerequisites</a></li>
-<li><a class="reference internal" href="#building-inside-a-ros-2-workspace">4.2. Building inside a ROS 2 Workspace</a></li>
-<li><a class="reference internal" href="#running-the-nodes">4.3. Running the Nodes</a><ul>
+<li><a class="reference internal" href="#building-inside-a-ros-2-workspace">4.3. Building inside a ROS 2 Workspace</a></li>
+<li><a class="reference internal" href="#running-the-nodes">4.4. Running the Nodes</a><ul>
 <li><a class="reference internal" href="#a-launching-via-launch-file-recommended">A. Launching via Launch File (Recommended)</a></li>
 <li><a class="reference internal" href="#b-direct-command-line-alternative">B. Direct Command Line (Alternative)</a></li>
 </ul>
 </li>
-<li><a class="reference internal" href="#verification">4.4. Verification</a></li>
+<li><a class="reference internal" href="#verification">4.5. Verification</a></li>
 </ul>
 </li>
 <li><a class="reference internal" href="#linux-kernel-tuning-hardware-optimization-guide">5. Linux Kernel Tuning &amp; Hardware Optimization Guide</a><ul>
@@ -982,7 +990,7 @@ Modify your application launch parameters or ROS 2 YAML parameter file:</p>
       
     </aside>
   </div>
-</div><script src="_static/documentation_options.js?v=350a9c04"></script>
+</div><script src="_static/documentation_options.js?v=e0a75244"></script>
     <script src="_static/doctools.js?v=9bcbadda"></script>
     <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="_static/scripts/furo.js?v=46bd48cc"></script>

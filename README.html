@@ -6,7 +6,7 @@
 <link rel="index" title="Index" href="genindex.html"><link rel="search" title="Search" href="search.html"><link rel="next" title="Architecture and Design Decisions" href="ARCHITECTURE.html"><link rel="prev" title="libbno055-linux Official Documentation" href="index.html">
 
     <!-- Generated with Sphinx 8.1.3 and Furo 2025.12.19 -->
-        <title>libbno055-linux - libbno055-linux 1.4.1 documentation</title>
+        <title>libbno055-linux - libbno055-linux 1.5.0 documentation</title>
       <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=d111a655" />
     <link rel="stylesheet" type="text/css" href="_static/styles/furo.css?v=7bdb33bb" />
     <link rel="stylesheet" type="text/css" href="_static/styles/furo-extensions.css?v=8dab3a3b" />
@@ -161,7 +161,7 @@
       </label>
     </div>
     <div class="header-center">
-      <a href="index.html"><div class="brand">libbno055-linux 1.4.1 documentation</div></a>
+      <a href="index.html"><div class="brand">libbno055-linux 1.5.0 documentation</div></a>
     </div>
     <div class="header-right">
       <div class="theme-toggle-container theme-toggle-header">
@@ -182,7 +182,7 @@
       
       <div class="sidebar-sticky"><a class="sidebar-brand" href="index.html">
   
-  <span class="sidebar-brand-text">libbno055-linux 1.4.1 documentation</span>
+  <span class="sidebar-brand-text">libbno055-linux 1.5.0 documentation</span>
   
 </a><form class="sidebar-search-container" method="get" action="search.html" role="search">
   <input class="sidebar-search" placeholder="Search" name="q" aria-label="Search">
@@ -356,8 +356,20 @@ make<span class="w"> </span>-j<span class="k">$(</span>nproc<span class="k">)</s
 </ol>
 </section>
 <hr class="docutils" />
-<section id="b-ros-2-colcon-workspace">
-<h3>B. ROS 2 (colcon workspace)<a class="headerlink" href="#b-ros-2-colcon-workspace" title="Link to this heading">¶</a></h3>
+<section id="b-ros-2">
+<h3>B. ROS 2<a class="headerlink" href="#b-ros-2" title="Link to this heading">¶</a></h3>
+<section id="option-1-binary-installation-via-apt">
+<h4>Option 1: Binary Installation (via <code class="docutils literal notranslate"><span class="pre">apt</span></code>)<a class="headerlink" href="#option-1-binary-installation-via-apt" title="Link to this heading">¶</a></h4>
+<p>If you are using ROS 2 (e.g. Humble), you can install the pre-built binary package directly using <code class="docutils literal notranslate"><span class="pre">apt</span></code>:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>sudo<span class="w"> </span>apt<span class="w"> </span>update
+sudo<span class="w"> </span>apt<span class="w"> </span>install<span class="w"> </span>ros-<span class="si">${</span><span class="nv">ROS_DISTRO</span><span class="si">}</span>-libbno055-linux
+<span class="c1"># For example, on ROS 2 Humble:</span>
+<span class="c1"># sudo apt install ros-humble-libbno055-linux</span>
+</pre></div>
+</div>
+</section>
+<section id="option-2-build-from-source-colcon-workspace">
+<h4>Option 2: Build from Source (colcon workspace)<a class="headerlink" href="#option-2-build-from-source-colcon-workspace" title="Link to this heading">¶</a></h4>
 <ol class="arabic">
 <li><p><strong>Clone and Build</strong>:</p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># Clone inside your ROS 2 workspace src directory</span>
@@ -380,8 +392,62 @@ Launch the zero-copy node (default) or the lifecycle node:</p>
 </li>
 </ol>
 </section>
-<section id="c-ros-2-api-reference">
-<h3>C. ROS 2 API Reference<a class="headerlink" href="#c-ros-2-api-reference" title="Link to this heading">¶</a></h3>
+</section>
+<hr class="docutils" />
+<section id="c-python-import-libbno055">
+<h3>C. Python (<code class="docutils literal notranslate"><span class="pre">import</span> <span class="pre">libbno055</span></code>)<a class="headerlink" href="#c-python-import-libbno055" title="Link to this heading">¶</a></h3>
+<ol class="arabic">
+<li><p><strong>Install via pip</strong>:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pip<span class="w"> </span>install<span class="w"> </span>.
+</pre></div>
+</div>
+</li>
+<li><p><strong>Use in Python</strong>:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">libbno055</span>
+
+<span class="c1"># Initialize IMU</span>
+<span class="n">imu</span> <span class="o">=</span> <span class="n">libbno055</span><span class="o">.</span><span class="n">BNO055</span><span class="p">(</span><span class="n">address</span><span class="o">=</span><span class="mh">0x28</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="s2">&quot;/dev/i2c-1&quot;</span><span class="p">)</span>
+<span class="k">if</span> <span class="n">imu</span><span class="o">.</span><span class="n">begin</span><span class="p">(</span><span class="n">libbno055</span><span class="o">.</span><span class="n">OpMode</span><span class="o">.</span><span class="n">NDOF</span><span class="p">):</span>
+    <span class="n">q</span> <span class="o">=</span> <span class="n">imu</span><span class="o">.</span><span class="n">get_quaternion</span><span class="p">()</span>
+    <span class="k">if</span> <span class="n">q</span><span class="p">:</span>
+        <span class="n">euler</span> <span class="o">=</span> <span class="n">libbno055</span><span class="o">.</span><span class="n">to_euler_degrees</span><span class="p">(</span><span class="n">q</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Roll: </span><span class="si">{</span><span class="n">euler</span><span class="o">.</span><span class="n">x</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2">, Pitch: </span><span class="si">{</span><span class="n">euler</span><span class="o">.</span><span class="n">y</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2">, Yaw: </span><span class="si">{</span><span class="n">euler</span><span class="o">.</span><span class="n">z</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</li>
+</ol>
+</section>
+<hr class="docutils" />
+<section id="d-rust-use-libbno055-bno055-opmode">
+<h3>D. Rust (<code class="docutils literal notranslate"><span class="pre">use</span> <span class="pre">libbno055::{BNO055,</span> <span class="pre">OpMode}</span></code>)<a class="headerlink" href="#d-rust-use-libbno055-bno055-opmode" title="Link to this heading">¶</a></h3>
+<ol class="arabic">
+<li><p><strong>Add Dependency (<code class="docutils literal notranslate"><span class="pre">Cargo.toml</span></code>)</strong>:</p>
+<div class="highlight-toml notranslate"><div class="highlight"><pre><span></span><span class="k">[dependencies]</span>
+<span class="n">libbno055</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">path</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;path/to/libbno055-linux/rust&quot;</span><span class="w"> </span><span class="p">}</span>
+</pre></div>
+</div>
+</li>
+<li><p><strong>Use in Rust</strong>:</p>
+<div class="highlight-rust notranslate"><div class="highlight"><pre><span></span><span class="k">use</span><span class="w"> </span><span class="n">libbno055</span><span class="p">::{</span><span class="n">BNO055</span><span class="p">,</span><span class="w"> </span><span class="n">OpMode</span><span class="p">,</span><span class="w"> </span><span class="n">Quaternion</span><span class="p">};</span>
+
+<span class="k">fn</span><span class="w"> </span><span class="nf">main</span><span class="p">()</span><span class="w"> </span><span class="p">-&gt;</span><span class="w"> </span><span class="nb">Result</span><span class="o">&lt;</span><span class="p">(),</span><span class="w"> </span><span class="o">&amp;&#39;</span><span class="nb">static</span><span class="w"> </span><span class="kt">str</span><span class="o">&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="kd">let</span><span class="w"> </span><span class="k">mut</span><span class="w"> </span><span class="n">imu</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">BNO055</span><span class="p">::</span><span class="n">new_i2c</span><span class="p">(</span><span class="mh">0x28</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;/dev/i2c-1&quot;</span><span class="p">)</span><span class="o">?</span><span class="p">;</span>
+<span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="n">imu</span><span class="p">.</span><span class="n">begin</span><span class="p">(</span><span class="n">OpMode</span><span class="p">::</span><span class="n">NDOF</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="k">if</span><span class="w"> </span><span class="kd">let</span><span class="w"> </span><span class="nb">Some</span><span class="p">(</span><span class="n">q</span><span class="p">)</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">imu</span><span class="p">.</span><span class="n">get_quaternion</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
+<span class="w">            </span><span class="kd">let</span><span class="w"> </span><span class="n">euler</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">BNO055</span><span class="p">::</span><span class="n">to_euler_degrees</span><span class="p">(</span><span class="o">&amp;</span><span class="n">q</span><span class="p">);</span>
+<span class="w">            </span><span class="fm">println!</span><span class="p">(</span><span class="s">&quot;Roll: {}, Pitch: {}, Yaw: {}&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">euler</span><span class="p">.</span><span class="n">x</span><span class="p">,</span><span class="w"> </span><span class="n">euler</span><span class="p">.</span><span class="n">y</span><span class="p">,</span><span class="w"> </span><span class="n">euler</span><span class="p">.</span><span class="n">z</span><span class="p">);</span>
+<span class="w">        </span><span class="p">}</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="w">    </span><span class="nb">Ok</span><span class="p">(())</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+</li>
+</ol>
+</section>
+<hr class="docutils" />
+<section id="e-ros-2-api-reference">
+<h3>E. ROS 2 API Reference<a class="headerlink" href="#e-ros-2-api-reference" title="Link to this heading">¶</a></h3>
 <section id="published-topics">
 <h4>Published Topics<a class="headerlink" href="#published-topics" title="Link to this heading">¶</a></h4>
 <div class="table-wrapper colwidths-auto docutils container">
@@ -640,8 +706,14 @@ Launch the zero-copy node (default) or the lifecycle node:</p>
 <li><a class="reference internal" href="#burst-read-state-estimation-ekf-features">Burst Read &amp; State Estimation (EKF) Features</a></li>
 <li><a class="reference internal" href="#quick-start">Quick Start</a><ul>
 <li><a class="reference internal" href="#a-standalone-c-no-ros">A. Standalone C++ (No-ROS)</a></li>
-<li><a class="reference internal" href="#b-ros-2-colcon-workspace">B. ROS 2 (colcon workspace)</a></li>
-<li><a class="reference internal" href="#c-ros-2-api-reference">C. ROS 2 API Reference</a><ul>
+<li><a class="reference internal" href="#b-ros-2">B. ROS 2</a><ul>
+<li><a class="reference internal" href="#option-1-binary-installation-via-apt">Option 1: Binary Installation (via <code class="docutils literal notranslate"><span class="pre">apt</span></code>)</a></li>
+<li><a class="reference internal" href="#option-2-build-from-source-colcon-workspace">Option 2: Build from Source (colcon workspace)</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#c-python-import-libbno055">C. Python (<code class="docutils literal notranslate"><span class="pre">import</span> <span class="pre">libbno055</span></code>)</a></li>
+<li><a class="reference internal" href="#d-rust-use-libbno055-bno055-opmode">D. Rust (<code class="docutils literal notranslate"><span class="pre">use</span> <span class="pre">libbno055::{BNO055,</span> <span class="pre">OpMode}</span></code>)</a></li>
+<li><a class="reference internal" href="#e-ros-2-api-reference">E. ROS 2 API Reference</a><ul>
 <li><a class="reference internal" href="#published-topics">Published Topics</a></li>
 <li><a class="reference internal" href="#services">Services</a></li>
 <li><a class="reference internal" href="#core-parameters">Core Parameters</a></li>
@@ -667,7 +739,7 @@ Launch the zero-copy node (default) or the lifecycle node:</p>
       
     </aside>
   </div>
-</div><script src="_static/documentation_options.js?v=350a9c04"></script>
+</div><script src="_static/documentation_options.js?v=e0a75244"></script>
     <script src="_static/doctools.js?v=9bcbadda"></script>
     <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="_static/scripts/furo.js?v=46bd48cc"></script>

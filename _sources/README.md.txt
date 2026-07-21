@@ -116,7 +116,20 @@ If you are developing a custom state estimator (Extended Kalman Filter / Complem
 
 ---
 
-### B. ROS 2 (colcon workspace)
+### B. ROS 2
+
+#### Option 1: Binary Installation (via `apt`)
+
+If you are using ROS 2 (e.g. Humble), you can install the pre-built binary package directly using `apt`:
+
+```bash
+sudo apt update
+sudo apt install ros-${ROS_DISTRO}-libbno055-linux
+# For example, on ROS 2 Humble:
+# sudo apt install ros-humble-libbno055-linux
+```
+
+#### Option 2: Build from Source (colcon workspace)
 
 1. **Clone and Build**:
    ```bash
@@ -137,7 +150,57 @@ If you are developing a custom state estimator (Extended Kalman Filter / Complem
    ros2 launch libbno055_linux bno055_launch.py
    ```
 
-### C. ROS 2 API Reference
+---
+
+### C. Python (`import libbno055`)
+
+1. **Install via pip**:
+   ```bash
+   pip install .
+   ```
+
+2. **Use in Python**:
+   ```python
+   import libbno055
+
+   # Initialize IMU
+   imu = libbno055.BNO055(address=0x28, device="/dev/i2c-1")
+   if imu.begin(libbno055.OpMode.NDOF):
+       q = imu.get_quaternion()
+       if q:
+           euler = libbno055.to_euler_degrees(q)
+           print(f"Roll: {euler.x:.2f}, Pitch: {euler.y:.2f}, Yaw: {euler.z:.2f}")
+   ```
+
+---
+
+### D. Rust (`use libbno055::{BNO055, OpMode}`)
+
+1. **Add Dependency (`Cargo.toml`)**:
+   ```toml
+   [dependencies]
+   libbno055 = { path = "path/to/libbno055-linux/rust" }
+   ```
+
+2. **Use in Rust**:
+   ```rust
+   use libbno055::{BNO055, OpMode, Quaternion};
+
+   fn main() -> Result<(), &'static str> {
+       let mut imu = BNO055::new_i2c(0x28, "/dev/i2c-1")?;
+       if imu.begin(OpMode::NDOF) {
+           if let Some(q) = imu.get_quaternion() {
+               let euler = BNO055::to_euler_degrees(&q);
+               println!("Roll: {}, Pitch: {}, Yaw: {}", euler.x, euler.y, euler.z);
+           }
+       }
+       Ok(())
+   }
+   ```
+
+---
+
+### E. ROS 2 API Reference
 
 #### Published Topics
 | Topic Name | Message Type | Description |
