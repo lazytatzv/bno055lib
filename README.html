@@ -239,241 +239,153 @@
         <article role="main" id="furo-main-content">
           <section id="libbno055-linux">
 <h1>libbno055-linux<a class="headerlink" href="#libbno055-linux" title="Link to this heading">¶</a></h1>
-<p><a class="reference internal" href="#include/libbno055-linux/bno055.hpp"><span class="xref myst"><img alt="C++17" src="https://img.shields.io/badge/C%2B%2B-17-blue.svg" /></span></a>
-<a class="reference external" href="https://pypi.org/project/libbno055-linux/"><img alt="PyPI" src="https://img.shields.io/pypi/v/libbno055-linux.svg" /></a>
-<a class="reference external" href="https://crates.io/crates/libbno055"><img alt="crates.io" src="https://img.shields.io/crates/v/libbno055.svg" /></a>
-<a class="reference internal" href="#src/python/bindings.cpp"><span class="xref myst"><img alt="Python" src="https://img.shields.io/badge/Python-3.8%2B-3776AB.svg" /></span></a>
-<a class="reference internal" href="#docs/INTEGRATION.md"><span class="xref myst"><img alt="ROS 2" src="https://img.shields.io/badge/ROS%202-Humble%20%7C%20Jazzy%20%7C%20Kilted-22314E.svg" /></span></a>
-<a class="reference internal" href="#docs/INTEGRATION.md"><span class="xref myst"><img alt="Ubuntu" src="https://img.shields.io/badge/Ubuntu-22.04%20%7C%2024.04-E95420.svg" /></span></a>
-<a class="reference external" href="https://github.com/lazytatzv/libbno055-linux/actions/workflows/ci.yml"><img alt="CI" src="https://github.com/lazytatzv/libbno055-linux/actions/workflows/ci.yml/badge.svg" /></a>
-<a class="reference external" href="https://codecov.io/gh/lazytatzv/libbno055-linux"><img alt="Coverage" src="https://codecov.io/gh/lazytatzv/libbno055-linux/graph/badge.svg" /></a>
-<a class="reference external" href="https://lazytatzv.github.io/libbno055-linux/"><img alt="Docs" src="https://img.shields.io/badge/docs-GitHub%20Pages-blue.svg" /></a>
-<a class="reference internal" href="#LICENSE"><span class="xref myst"><img alt="License" src="https://img.shields.io/badge/License-MIT-green.svg" /></span></a></p>
-<blockquote>
-<div><p><strong>A robust, low-latency (270µs) BNO055 IMU driver for Linux, supporting I2C/UART with auto-recovery.</strong></p>
-</div></blockquote>
-<p>A C++17 driver with C, Python, Rust, and ROS 2 bindings for the Bosch BNO055 9-DOF IMU sensor.</p>
-<section id="demonstration">
-<h2>Demonstration<a class="headerlink" href="#demonstration" title="Link to this heading">¶</a></h2>
-<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$ </span>ros2<span class="w"> </span>topic<span class="w"> </span><span class="nb">echo</span><span class="w"> </span>/imu/data
-<span class="go">header:</span>
-<span class="go">  stamp:</span>
-<span class="go">    sec: 1718920102</span>
-<span class="go">    nanosec: 432100000</span>
-<span class="go">  frame_id: &#39;imu_link&#39;</span>
-<span class="go">orientation:</span>
-<span class="go">  x: 0.001</span>
-<span class="go">  y: 0.002</span>
-<span class="go">  z: 0.707</span>
-<span class="go">  w: 0.707</span>
-<span class="go">angular_velocity:</span>
-<span class="go">  x: 0.012</span>
-<span class="go">  y: -0.004</span>
-<span class="go">  z: 0.001</span>
-<span class="go">linear_acceleration:</span>
-<span class="go">  x: 0.02</span>
-<span class="go">  y: -0.01</span>
-<span class="go">  z: 9.81</span>
+<p><a class="reference external" href="https://github.com/lazytatzv/libbno055-linux/actions"><img alt="Build &amp; Test" src="https://github.com/lazytatzv/libbno055-linux/actions/workflows/ci.yml/badge.svg" /></a>
+<a class="reference internal" href="#LICENSE"><span class="xref myst"><img alt="License: MIT" src="https://img.shields.io/badge/License-MIT-blue.svg" /></span></a>
+<a class="reference external" href="https://en.cppreference.com/w/cpp/17"><img alt="C++ Standard" src="https://img.shields.io/badge/C%2B%2B-17-blue.svg" /></a>
+<a class="reference external" href="https://docs.ros.org/"><img alt="ROS 2" src="https://img.shields.io/badge/ROS%202-Humble%20%7F%20Jazzy-orange.svg" /></a>
+<a class="reference internal" href="#CHANGELOG.md"><span class="xref myst"><img alt="Version" src="https://img.shields.io/badge/version-1.7.1-green.svg" /></span></a></p>
+<p><strong>A high-performance C++17 library, ROS 2 integration, and multi-language binding (Python, C, Rust) for the Bosch BNO055 9-axis IMU on Linux.</strong></p>
+<p>Features an integrated <strong>Straight-Line &amp; Heading PID Controller</strong> for mobile robots, zero-copy transport, safety watchdog protection, and IMU fail-safe passthrough out of the box.</p>
+<hr class="docutils" />
+<section id="quick-start">
+<h2>⚡ Quick Start<a class="headerlink" href="#quick-start" title="Link to this heading">¶</a></h2>
+<section id="ros-2-users-one-command-launch">
+<h3>1. ROS 2 Users (One-Command Launch)<a class="headerlink" href="#ros-2-users-one-command-launch" title="Link to this heading">¶</a></h3>
+<p>Launch the <strong>IMU Driver</strong> and <strong>Heading PID Controller</strong> in a single command (Zero-Copy Composable Container):</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>ros2<span class="w"> </span>launch<span class="w"> </span>libbno055_linux<span class="w"> </span>heading_control_launch.py
 </pre></div>
 </div>
+<blockquote>
+<div><p><strong>Need Nav2 Lifecycle Management?</strong> Pass <code class="docutils literal notranslate"><span class="pre">node_type:=lifecycle</span></code>:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>ros2<span class="w"> </span>launch<span class="w"> </span>libbno055_linux<span class="w"> </span>heading_control_launch.py<span class="w"> </span>node_type:<span class="o">=</span>lifecycle
+</pre></div>
+</div>
+</div></blockquote>
+</section>
+<section id="standalone-c-users-non-ros">
+<h3>2. Standalone C++ Users (Non-ROS)<a class="headerlink" href="#standalone-c-users-non-ros" title="Link to this heading">¶</a></h3>
+<p>Build and run the interactive 100Hz Heading PID Control Demo:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>mkdir<span class="w"> </span>-p<span class="w"> </span>build<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="nb">cd</span><span class="w"> </span>build
+cmake<span class="w"> </span>..<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>make<span class="w"> </span>-j<span class="k">$(</span>nproc<span class="k">)</span>
+
+<span class="c1"># Run the 100Hz PID Heading Control Demo</span>
+./heading_control_demo<span class="w"> </span>/dev/i2c-1
+</pre></div>
+</div>
+</section>
+<section id="python-users">
+<h3>3. Python Users<a class="headerlink" href="#python-users" title="Link to this heading">¶</a></h3>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pip<span class="w"> </span>install<span class="w"> </span>libbno055-linux
+python3<span class="w"> </span>-c<span class="w"> </span><span class="s2">&quot;import libbno055; print(&#39;Installed successfully!&#39;)&quot;</span>
+</pre></div>
+</div>
+</section>
 </section>
 <hr class="docutils" />
 <section id="features">
-<h2>Features<a class="headerlink" href="#features" title="Link to this heading">¶</a></h2>
-<div class="table-wrapper colwidths-auto docutils container">
-<table class="docutils align-default">
-<thead>
-<tr class="row-odd"><th class="head text-left"><p>Feature</p></th>
-<th class="head text-center"><p><code class="docutils literal notranslate"><span class="pre">libbno055-linux</span></code></p></th>
-<th class="head text-center"><p>Adafruit</p></th>
-<th class="head text-center"><p>Kernel IIO</p></th>
-</tr>
-</thead>
-<tbody>
-<tr class="row-even"><td class="text-left"><p><strong>ROS 2</strong></p></td>
-<td class="text-center"><p>✅</p></td>
-<td class="text-center"><p>❌</p></td>
-<td class="text-center"><p>△</p></td>
-</tr>
-<tr class="row-odd"><td class="text-left"><p><strong>Python</strong></p></td>
-<td class="text-center"><p>✅</p></td>
-<td class="text-center"><p>✅</p></td>
-<td class="text-center"><p>❌</p></td>
-</tr>
-<tr class="row-even"><td class="text-left"><p><strong>Rust</strong></p></td>
-<td class="text-center"><p>✅</p></td>
-<td class="text-center"><p>❌</p></td>
-<td class="text-center"><p>❌</p></td>
-</tr>
-<tr class="row-odd"><td class="text-left"><p><strong>UART (921600 bps)</strong></p></td>
-<td class="text-center"><p>✅</p></td>
-<td class="text-center"><p>❌</p></td>
-<td class="text-center"><p>△</p></td>
-</tr>
-<tr class="row-even"><td class="text-left"><p><strong>Auto Recovery</strong></p></td>
-<td class="text-center"><p>✅</p></td>
-<td class="text-center"><p>❌</p></td>
-<td class="text-center"><p>❌</p></td>
-</tr>
-<tr class="row-odd"><td class="text-left"><p><strong>Zero-CPU Interrupts</strong></p></td>
-<td class="text-center"><p>✅</p></td>
-<td class="text-center"><p>❌</p></td>
-<td class="text-center"><p>❌</p></td>
-</tr>
-</tbody>
-</table>
-</div>
-</section>
-<hr class="docutils" />
-<section id="highlights">
-<h2>Highlights<a class="headerlink" href="#highlights" title="Link to this heading">¶</a></h2>
+<h2>✨ Features<a class="headerlink" href="#features" title="Link to this heading">¶</a></h2>
 <ul class="simple">
-<li><p><strong>Native I2C &amp; UART Support</strong>: Fast POSIX drivers with hardware auto-recovery for I2C bus lockups.</p></li>
-<li><p><strong>ROS 2 Lifecycle Integration</strong>: High-performance intra-process publishing and diagnostic streams.</p></li>
-<li><p><strong>Multi-Language APIs</strong>: C++17 core engine with native C, Python (<code class="docutils literal notranslate"><span class="pre">pip</span></code>), and safe Rust (<code class="docutils literal notranslate"><span class="pre">crates.io</span></code>).</p></li>
+<li><p><strong>🚀 Low Latency &amp; High Rate</strong>: Supports up to 200Hz sensor updates, 1kHz/2kHz hardware ODR, and FTDI UART low-latency mode (<code class="docutils literal notranslate"><span class="pre">ASYNC_LOW_LATENCY</span></code>).</p></li>
+<li><p><strong>🎯 Integrated Heading PID Controller</strong>: Zero-allocation C++17 controller featuring:</p>
+<ul>
+<li><p><strong>Shortest-Path Angle Normalization</strong>: Automatic $\pm 180^\circ$ boundary wrapping.</p></li>
+<li><p><strong>Filtered Gyro D-Term</strong>: 1st-order Low-Pass Filtered gyro rate to eliminate motor vibration noise.</p></li>
+<li><p><strong>Trapezoidal Integration</strong>: Jitter-free integration with anti-windup clamping.</p></li>
+<li><p><strong>Slew-Rate Limiter</strong>: Constrains angular acceleration to prevent wheel slip and motor gear shock.</p></li>
+</ul>
+</li>
+<li><p><strong>🛡️ Safety &amp; Fail-Safe Protection</strong>:</p>
+<ul>
+<li><p><strong>Command-Loss Watchdog</strong>: Automatically stops the robot (<code class="docutils literal notranslate"><span class="pre">zero</span> <span class="pre">velocity</span></code>) if input commands time out.</p></li>
+<li><p><strong>IMU Fail-Safe Passthrough</strong>: Seamlessly passes velocity commands through if IMU is offline or disconnected.</p></li>
+<li><p><strong>Outlier Rejection</strong>: Rejects corrupted or <code class="docutils literal notranslate"><span class="pre">NaN</span></code>/<code class="docutils literal notranslate"><span class="pre">Inf</span></code> quaternion data automatically.</p></li>
+</ul>
+</li>
+<li><p><strong>📡 Advanced ROS 2 Architecture</strong>:</p>
+<ul>
+<li><p><strong>Zero-Copy Composable Components</strong> (<code class="docutils literal notranslate"><span class="pre">rclcpp_components</span></code>).</p></li>
+<li><p><strong>Managed Lifecycle Nodes</strong> (<code class="docutils literal notranslate"><span class="pre">rclcpp_lifecycle</span></code>) for Nav2 integration.</p></li>
+<li><p><strong>Isolated CallbackGroups</strong> (<code class="docutils literal notranslate"><span class="pre">MutuallyExclusive</span></code>) &amp; <code class="docutils literal notranslate"><span class="pre">MultiThreadedExecutor</span></code>.</p></li>
+<li><p><strong>Linux <code class="docutils literal notranslate"><span class="pre">SCHED_FIFO</span></code> Realtime Priority</strong> support.</p></li>
+</ul>
+</li>
+<li><p><strong>🌐 Polyglot Bindings</strong>: Native support for <strong>C++17</strong>, <strong>C99 FFI</strong>, <strong>Python 3</strong>, and <strong>Rust</strong>.</p></li>
 </ul>
 </section>
 <hr class="docutils" />
-<section id="documentation">
-<h2>Documentation<a class="headerlink" href="#documentation" title="Link to this heading">¶</a></h2>
-<p>This README is a quick overview. Please see the <code class="docutils literal notranslate"><span class="pre">docs/</span></code> directory for detailed information:</p>
+<section id="installation-building">
+<h2>🛠️ Installation &amp; Building<a class="headerlink" href="#installation-building" title="Link to this heading">¶</a></h2>
+<section id="prerequisites">
+<h3>Prerequisites<a class="headerlink" href="#prerequisites" title="Link to this heading">¶</a></h3>
 <ul class="simple">
-<li><p><strong><a class="reference external" href="https://lazytatzv.github.io/libbno055-linux/">Sphinx API Documentation (Web)</a></strong>: Auto-generated web documentation for C++ and Python APIs.</p></li>
-<li><p><strong><a class="reference internal" href="#docs/HEADING_CONTROL.md"><span class="xref myst">Heading &amp; Straight-Line PID Control Guide</span></a></strong>: Production-grade anti-drift PID control theory, C++ API, ROS 2 Composable Node, and live tuning.</p></li>
-<li><p><strong><a class="reference internal" href="#docs/FEATURES_AND_COMPARISON.md"><span class="xref myst">Features &amp; Comparison</span></a></strong>: Detailed feature list and why you should choose this over Kernel IIO drivers.</p></li>
-<li><p><strong><a class="reference internal" href="#docs/CALIBRATION.md"><span class="xref myst">Calibration Best Practices</span></a></strong>: The “Pro Workflow” for managing calibration in real-time robotic control loops.</p></li>
-<li><p><strong><a class="reference internal" href="#docs/API_REFERENCE.md"><span class="xref myst">API Reference (Markdown)</span></a></strong>: Full class and function reference for C++, C, Python, and Rust.</p></li>
-<li><p><strong><a class="reference internal" href="#docs/INTEGRATION.md"><span class="xref myst">Integration &amp; Tuning Guide</span></a></strong>: ROS 2 YAML parameters, EKF setup, 400kHz I2C, UART 921600 bps tuning.</p></li>
-<li><p><strong><a class="reference internal" href="#docs/ARCHITECTURE.md"><span class="xref myst">Architecture &amp; Design</span></a></strong>: PIMPL design, zero-copy transport, FFI layers, and state machines.</p></li>
-<li><p><strong><a class="reference internal" href="#docs/TROUBLESHOOTING.md"><span class="xref myst">Troubleshooting &amp; FAQ</span></a></strong>: Hardware wiring, permissions, and clock-stretching fixes.</p></li>
+<li><p>Linux (Ubuntu 20.04+, Raspberry Pi OS, etc.)</p></li>
+<li><p>C++17 compatible compiler (<code class="docutils literal notranslate"><span class="pre">gcc</span></code> 8+ or <code class="docutils literal notranslate"><span class="pre">clang</span></code> 7+)</p></li>
+<li><p>CMake 3.10+</p></li>
+<li><p>(Optional) ROS 2 Humble / Iron / Jazzy</p></li>
 </ul>
 </section>
-<hr class="docutils" />
-<section id="installation">
-<h2>Installation<a class="headerlink" href="#installation" title="Link to this heading">¶</a></h2>
-<section id="ubuntu-apt-ros-2">
-<h3>Ubuntu (APT / ROS 2)<a class="headerlink" href="#ubuntu-apt-ros-2" title="Link to this heading">¶</a></h3>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>sudo<span class="w"> </span>apt<span class="w"> </span>update<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>sudo<span class="w"> </span>apt<span class="w"> </span>install<span class="w"> </span>ros-<span class="si">${</span><span class="nv">ROS_DISTRO</span><span class="si">}</span>-libbno055-linux
-</pre></div>
-</div>
-</section>
-<section id="python-pip">
-<h3>Python (pip)<a class="headerlink" href="#python-pip" title="Link to this heading">¶</a></h3>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pip<span class="w"> </span>install<span class="w"> </span>libbno055-linux
-</pre></div>
-</div>
-</section>
-<section id="rust-cargo">
-<h3>Rust (Cargo)<a class="headerlink" href="#rust-cargo" title="Link to this heading">¶</a></h3>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>cargo<span class="w"> </span>add<span class="w"> </span>libbno055
-</pre></div>
-</div>
-</section>
-<section id="build-from-source">
-<h3>Build from Source<a class="headerlink" href="#build-from-source" title="Link to this heading">¶</a></h3>
+<section id="building-from-source">
+<h3>Building from Source<a class="headerlink" href="#building-from-source" title="Link to this heading">¶</a></h3>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>git<span class="w"> </span>clone<span class="w"> </span>https://github.com/lazytatzv/libbno055-linux.git
 <span class="nb">cd</span><span class="w"> </span>libbno055-linux
 mkdir<span class="w"> </span>build<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="nb">cd</span><span class="w"> </span>build
-cmake<span class="w"> </span>..<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>make
+cmake<span class="w"> </span>..
+make<span class="w"> </span>-j<span class="k">$(</span>nproc<span class="k">)</span>
 sudo<span class="w"> </span>make<span class="w"> </span>install
 </pre></div>
 </div>
 </section>
-</section>
-<hr class="docutils" />
-<section id="quick-start">
-<h2>Quick Start<a class="headerlink" href="#quick-start" title="Link to this heading">¶</a></h2>
-<section id="rust-crates-io">
-<h3>Rust (<code class="docutils literal notranslate"><span class="pre">crates.io</span></code>)<a class="headerlink" href="#rust-crates-io" title="Link to this heading">¶</a></h3>
-<blockquote>
-<div><p><strong>Tip:</strong> See <a class="reference internal" href="#rust/examples/demo.rs"><span class="xref myst"><code class="docutils literal notranslate"><span class="pre">rust/examples/demo.rs</span></code></span></a> for a complete, runnable example. You can run it instantly with <code class="docutils literal notranslate"><span class="pre">cargo</span> <span class="pre">run</span> <span class="pre">--example</span> <span class="pre">demo</span></code>.</p>
-</div></blockquote>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>cargo<span class="w"> </span>add<span class="w"> </span>libbno055
+<section id="ros-2-workspace-build-colcon">
+<h3>ROS 2 Workspace Build (<code class="docutils literal notranslate"><span class="pre">colcon</span></code>)<a class="headerlink" href="#ros-2-workspace-build-colcon" title="Link to this heading">¶</a></h3>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">cd</span><span class="w"> </span>~/ros2_ws/src
+git<span class="w"> </span>clone<span class="w"> </span>https://github.com/lazytatzv/libbno055-linux.git
+<span class="nb">cd</span><span class="w"> </span>~/ros2_ws
+colcon<span class="w"> </span>build<span class="w"> </span>--packages-select<span class="w"> </span>libbno055_linux
+<span class="nb">source</span><span class="w"> </span>install/setup.bash
 </pre></div>
 </div>
-<div class="highlight-rust notranslate"><div class="highlight"><pre><span></span><span class="k">use</span><span class="w"> </span><span class="n">libbno055</span><span class="p">::{</span><span class="n">BNO055</span><span class="p">,</span><span class="w"> </span><span class="n">OpMode</span><span class="p">};</span>
+</section>
+</section>
+<hr class="docutils" />
+<section id="configuration-parameter-tuning">
+<h2>⚙️ Configuration &amp; Parameter Tuning<a class="headerlink" href="#configuration-parameter-tuning" title="Link to this heading">¶</a></h2>
+<p>Edit <a class="reference internal" href="#config/heading_control_params.yaml"><span class="xref myst"><code class="docutils literal notranslate"><span class="pre">config/heading_control_params.yaml</span></code></span></a> to tune PID gains or timeouts:</p>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">bno055_heading_control_node</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">ros__parameters</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">imu_topic</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;imu/data&quot;</span><span class="w">             </span><span class="c1"># Input IMU topic</span>
+<span class="w">    </span><span class="nt">cmd_vel_in_topic</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;cmd_vel_in&quot;</span><span class="w">     </span><span class="c1"># Raw input velocity command</span>
+<span class="w">    </span><span class="nt">cmd_vel_out_topic</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;cmd_vel&quot;</span><span class="w">       </span><span class="c1"># Corrected output velocity command</span>
 
-<span class="k">fn</span><span class="w"> </span><span class="nf">main</span><span class="p">()</span><span class="w"> </span><span class="p">-&gt;</span><span class="w"> </span><span class="nb">Result</span><span class="o">&lt;</span><span class="p">(),</span><span class="w"> </span><span class="o">&amp;&#39;</span><span class="nb">static</span><span class="w"> </span><span class="kt">str</span><span class="o">&gt;</span><span class="w"> </span><span class="p">{</span>
-<span class="w">    </span><span class="kd">let</span><span class="w"> </span><span class="k">mut</span><span class="w"> </span><span class="n">imu</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">BNO055</span><span class="p">::</span><span class="n">new_i2c</span><span class="p">(</span><span class="mh">0x28</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;/dev/i2c-1&quot;</span><span class="p">)</span><span class="o">?</span><span class="p">;</span>
-<span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="n">imu</span><span class="p">.</span><span class="n">begin</span><span class="p">(</span><span class="n">OpMode</span><span class="p">::</span><span class="n">NDOF</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
-<span class="w">        </span><span class="k">if</span><span class="w"> </span><span class="kd">let</span><span class="w"> </span><span class="nb">Some</span><span class="p">(</span><span class="n">q</span><span class="p">)</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">imu</span><span class="p">.</span><span class="n">get_quaternion</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
-<span class="w">            </span><span class="kd">let</span><span class="w"> </span><span class="n">euler</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">BNO055</span><span class="p">::</span><span class="n">to_euler_degrees</span><span class="p">(</span><span class="o">&amp;</span><span class="n">q</span><span class="p">);</span>
-<span class="w">            </span><span class="fm">println!</span><span class="p">(</span><span class="s">&quot;Roll: {:.2}, Pitch: {:.2}, Yaw: {:.2}&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">euler</span><span class="p">.</span><span class="n">x</span><span class="p">,</span><span class="w"> </span><span class="n">euler</span><span class="p">.</span><span class="n">y</span><span class="p">,</span><span class="w"> </span><span class="n">euler</span><span class="p">.</span><span class="n">z</span><span class="p">);</span>
-<span class="w">        </span><span class="p">}</span>
-<span class="w">    </span><span class="p">}</span>
-<span class="w">    </span><span class="nb">Ok</span><span class="p">(())</span>
-<span class="p">}</span>
-</pre></div>
-</div>
-</section>
-<hr class="docutils" />
-<section id="id1">
-<h3>Python (<code class="docutils literal notranslate"><span class="pre">pip</span></code>)<a class="headerlink" href="#id1" title="Link to this heading">¶</a></h3>
-<blockquote>
-<div><p><strong>Tip:</strong> See <a class="reference internal" href="#examples/python/python_demo.py"><span class="xref myst"><code class="docutils literal notranslate"><span class="pre">examples/python/python_demo.py</span></code></span></a> for a complete, runnable script featuring diagnostics, error handling, and formatting.</p>
-</div></blockquote>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pip<span class="w"> </span>install<span class="w"> </span>libbno055-linux<span class="w">  </span><span class="c1"># Or: pip install . (from source)</span>
-</pre></div>
-</div>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">libbno055</span>
+<span class="w">    </span><span class="c1"># PID &amp; Control Gains</span>
+<span class="w">    </span><span class="nt">kp</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0.05</span><span class="w">                           </span><span class="c1"># Proportional Gain</span>
+<span class="w">    </span><span class="nt">ki</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0.001</span><span class="w">                          </span><span class="c1"># Integral Gain (Trapezoidal Rule)</span>
+<span class="w">    </span><span class="nt">kd</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0.01</span><span class="w">                           </span><span class="c1"># Derivative Gain (Filtered Gyro)</span>
+<span class="w">    </span><span class="nt">kff</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0.0</span><span class="w">                           </span><span class="c1"># Feedforward Gain</span>
+<span class="w">    </span><span class="nt">max_i_term</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0.2</span><span class="w">                    </span><span class="c1"># Anti-windup saturation limit</span>
+<span class="w">    </span><span class="nt">max_slew_rate</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">2.0</span><span class="w">                 </span><span class="c1"># Max output change rate (rad/s^2)</span>
 
-<span class="n">imu</span> <span class="o">=</span> <span class="n">libbno055</span><span class="o">.</span><span class="n">BNO055</span><span class="p">(</span><span class="n">address</span><span class="o">=</span><span class="mh">0x28</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="s2">&quot;/dev/i2c-1&quot;</span><span class="p">)</span>
-<span class="k">if</span> <span class="n">imu</span><span class="o">.</span><span class="n">begin</span><span class="p">(</span><span class="n">libbno055</span><span class="o">.</span><span class="n">OpMode</span><span class="o">.</span><span class="n">NDOF</span><span class="p">):</span>
-    <span class="n">q</span> <span class="o">=</span> <span class="n">imu</span><span class="o">.</span><span class="n">get_quaternion</span><span class="p">()</span>
-    <span class="k">if</span> <span class="n">q</span><span class="p">:</span>
-        <span class="n">euler</span> <span class="o">=</span> <span class="n">libbno055</span><span class="o">.</span><span class="n">to_euler_degrees</span><span class="p">(</span><span class="n">q</span><span class="p">)</span>
-        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Roll: </span><span class="si">{</span><span class="n">euler</span><span class="o">.</span><span class="n">x</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2">, Pitch: </span><span class="si">{</span><span class="n">euler</span><span class="o">.</span><span class="n">y</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2">, Yaw: </span><span class="si">{</span><span class="n">euler</span><span class="o">.</span><span class="n">z</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="w">    </span><span class="c1"># Safety Timeouts</span>
+<span class="w">    </span><span class="nt">cmd_vel_timeout</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0.5</span><span class="w">               </span><span class="c1"># Command loss Watchdog timeout (seconds)</span>
+<span class="w">    </span><span class="nt">imu_timeout</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1.0</span><span class="w">                   </span><span class="c1"># IMU loss Fail-Safe timeout (seconds)</span>
 </pre></div>
 </div>
 </section>
 <hr class="docutils" />
-<section id="c-17-native-cmake">
-<h3>C++17 (Native CMake)<a class="headerlink" href="#c-17-native-cmake" title="Link to this heading">¶</a></h3>
-<div class="highlight-cpp notranslate"><div class="highlight"><pre><span></span><span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;libbno055-linux/bno055.hpp&gt;</span>
-<span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;iostream&gt;</span>
-
-<span class="kt">int</span><span class="w"> </span><span class="nf">main</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
-<span class="w">    </span><span class="n">bno055lib</span><span class="o">::</span><span class="n">BNO055</span><span class="w"> </span><span class="n">imu</span><span class="p">(</span><span class="mh">0x28</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;/dev/i2c-1&quot;</span><span class="p">);</span>
-<span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">imu</span><span class="p">.</span><span class="n">begin</span><span class="p">(</span><span class="n">bno055lib</span><span class="o">::</span><span class="n">OpMode</span><span class="o">::</span><span class="n">NDOF</span><span class="p">))</span><span class="w"> </span><span class="p">{</span>
-<span class="w">        </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="k">auto</span><span class="w"> </span><span class="n">q</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">imu</span><span class="p">.</span><span class="n">getQuaternionNoexcept</span><span class="p">())</span><span class="w"> </span><span class="p">{</span>
-<span class="w">            </span><span class="k">auto</span><span class="w"> </span><span class="n">euler</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">bno055lib</span><span class="o">::</span><span class="n">toEulerDegrees</span><span class="p">(</span><span class="o">*</span><span class="n">q</span><span class="p">);</span>
-<span class="w">            </span><span class="n">std</span><span class="o">::</span><span class="n">cout</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="s">&quot;Roll: &quot;</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="n">euler</span><span class="p">.</span><span class="n">x</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="s">&quot; Pitch: &quot;</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="n">euler</span><span class="p">.</span><span class="n">y</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="s">&quot; Yaw: &quot;</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="n">euler</span><span class="p">.</span><span class="n">z</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="s">&quot;</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">;</span>
-<span class="w">        </span><span class="p">}</span>
-<span class="w">    </span><span class="p">}</span>
-<span class="p">}</span>
-</pre></div>
-</div>
-</section>
-<hr class="docutils" />
-<section id="ros-2-node-binary-installation">
-<h3>ROS 2 Node (Binary Installation)<a class="headerlink" href="#ros-2-node-binary-installation" title="Link to this heading">¶</a></h3>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>sudo<span class="w"> </span>apt<span class="w"> </span>update<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>sudo<span class="w"> </span>apt<span class="w"> </span>install<span class="w"> </span>ros-<span class="si">${</span><span class="nv">ROS_DISTRO</span><span class="si">}</span>-libbno055-linux
-ros2<span class="w"> </span>launch<span class="w"> </span>libbno055_linux<span class="w"> </span>bno055_launch.py
-</pre></div>
-</div>
-</section>
-<hr class="docutils" />
-<section id="robot-straight-line-heading-pid-control">
-<h3>Robot Straight-Line &amp; Heading PID Control<a class="headerlink" href="#robot-straight-line-heading-pid-control" title="Link to this heading">¶</a></h3>
-<p>Want to prevent your robot from drifting during straight-line driving or maintain target heading? Run the ROS 2 node using:</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># Launch IMU Driver + Heading PID Controller</span>
-ros2<span class="w"> </span>launch<span class="w"> </span>libbno055_linux<span class="w"> </span>heading_control_launch.py
-</pre></div>
-</div>
+<section id="documentation-guides">
+<h2>📚 Documentation &amp; Guides<a class="headerlink" href="#documentation-guides" title="Link to this heading">¶</a></h2>
 <ul class="simple">
-<li><p><strong>Features Active Out-of-the-Box</strong>: Zero-Copy transport, PID anti-drift, IMU Fail-Safe passthrough, and Watchdog command-loss safety.</p></li>
-<li><p><strong>Custom Configuration</strong>: Edit <a class="reference internal" href="#config/heading_control_params.yaml"><span class="xref myst"><code class="docutils literal notranslate"><span class="pre">config/heading_control_params.yaml</span></code></span></a> to tune PID gains (<code class="docutils literal notranslate"><span class="pre">kp</span></code>, <code class="docutils literal notranslate"><span class="pre">ki</span></code>, <code class="docutils literal notranslate"><span class="pre">kd</span></code>) or timeouts.</p></li>
+<li><p>📘 <a class="reference internal" href="#docs/HEADING_CONTROL.md"><span class="xref myst">Heading Control Architecture &amp; Tuning Guide</span></a></p></li>
+<li><p>📙 <a class="reference internal" href="#docs/API_REFERENCE.md"><span class="xref myst">C++ / C / Python / Rust API Reference</span></a></p></li>
+<li><p>📗 <a class="reference internal" href="#src/ros2/README.md"><span class="xref myst">ROS 2 Nodes &amp; Component Architecture</span></a></p></li>
+<li><p>📕 <a class="reference internal" href="#examples/README.md"><span class="xref myst">Code Examples Overview</span></a></p></li>
+<li><p>📓 <a class="reference internal" href="#docs/CALIBRATION.md"><span class="xref myst">Hardware Calibration Guide</span></a></p></li>
+<li><p>📒 <a class="reference internal" href="#docs/TROUBLESHOOTING.md"><span class="xref myst">Troubleshooting &amp; FAQ</span></a></p></li>
 </ul>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># Standalone C++ Demo (Visual ASCII Motor Output Dashboard for non-ROS users)</span>
-./build/heading_control_demo<span class="w"> </span>/dev/i2c-1
-</pre></div>
-</div>
-</section>
 </section>
 <hr class="docutils" />
 <section id="license">
-<h2>License<a class="headerlink" href="#license" title="Link to this heading">¶</a></h2>
-<p>This project is released under the <a class="reference internal" href="#LICENSE"><span class="xref myst">MIT License</span></a>.</p>
+<h2>📄 License<a class="headerlink" href="#license" title="Link to this heading">¶</a></h2>
+<p>This project is licensed under the <a class="reference internal" href="#LICENSE"><span class="xref myst">MIT License</span></a>.</p>
 </section>
 </section>
 
@@ -533,26 +445,22 @@ ros2<span class="w"> </span>launch<span class="w"> </span>libbno055_linux<span c
           <div class="toc-tree">
             <ul>
 <li><a class="reference internal" href="#">libbno055-linux</a><ul>
-<li><a class="reference internal" href="#demonstration">Demonstration</a></li>
-<li><a class="reference internal" href="#features">Features</a></li>
-<li><a class="reference internal" href="#highlights">Highlights</a></li>
-<li><a class="reference internal" href="#documentation">Documentation</a></li>
-<li><a class="reference internal" href="#installation">Installation</a><ul>
-<li><a class="reference internal" href="#ubuntu-apt-ros-2">Ubuntu (APT / ROS 2)</a></li>
-<li><a class="reference internal" href="#python-pip">Python (pip)</a></li>
-<li><a class="reference internal" href="#rust-cargo">Rust (Cargo)</a></li>
-<li><a class="reference internal" href="#build-from-source">Build from Source</a></li>
+<li><a class="reference internal" href="#quick-start">⚡ Quick Start</a><ul>
+<li><a class="reference internal" href="#ros-2-users-one-command-launch">1. ROS 2 Users (One-Command Launch)</a></li>
+<li><a class="reference internal" href="#standalone-c-users-non-ros">2. Standalone C++ Users (Non-ROS)</a></li>
+<li><a class="reference internal" href="#python-users">3. Python Users</a></li>
 </ul>
 </li>
-<li><a class="reference internal" href="#quick-start">Quick Start</a><ul>
-<li><a class="reference internal" href="#rust-crates-io">Rust (<code class="docutils literal notranslate"><span class="pre">crates.io</span></code>)</a></li>
-<li><a class="reference internal" href="#id1">Python (<code class="docutils literal notranslate"><span class="pre">pip</span></code>)</a></li>
-<li><a class="reference internal" href="#c-17-native-cmake">C++17 (Native CMake)</a></li>
-<li><a class="reference internal" href="#ros-2-node-binary-installation">ROS 2 Node (Binary Installation)</a></li>
-<li><a class="reference internal" href="#robot-straight-line-heading-pid-control">Robot Straight-Line &amp; Heading PID Control</a></li>
+<li><a class="reference internal" href="#features">✨ Features</a></li>
+<li><a class="reference internal" href="#installation-building">🛠️ Installation &amp; Building</a><ul>
+<li><a class="reference internal" href="#prerequisites">Prerequisites</a></li>
+<li><a class="reference internal" href="#building-from-source">Building from Source</a></li>
+<li><a class="reference internal" href="#ros-2-workspace-build-colcon">ROS 2 Workspace Build (<code class="docutils literal notranslate"><span class="pre">colcon</span></code>)</a></li>
 </ul>
 </li>
-<li><a class="reference internal" href="#license">License</a></li>
+<li><a class="reference internal" href="#configuration-parameter-tuning">⚙️ Configuration &amp; Parameter Tuning</a></li>
+<li><a class="reference internal" href="#documentation-guides">📚 Documentation &amp; Guides</a></li>
+<li><a class="reference internal" href="#license">📄 License</a></li>
 </ul>
 </li>
 </ul>
