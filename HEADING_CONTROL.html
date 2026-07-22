@@ -239,11 +239,11 @@
         <article role="main" id="furo-main-content">
           <section id="robot-straight-line-heading-pid-controller-architecture">
 <h1>Robot Straight-Line &amp; Heading PID Controller Architecture<a class="headerlink" href="#robot-straight-line-heading-pid-controller-architecture" title="Link to this heading">¶</a></h1>
-<p>This document provides a comprehensive guide to the <strong>Theoretical Optimal Control Grade Heading Controller</strong> in <code class="docutils literal notranslate"><span class="pre">libbno055-linux</span></code> (<code class="docutils literal notranslate"><span class="pre">bno055lib::HeadingController</span></code>), as well as its production ROS 2 nodes (<code class="docutils literal notranslate"><span class="pre">bno055_heading_control_node</span></code> and <code class="docutils literal notranslate"><span class="pre">bno055_lifecycle_heading_control_node</span></code>).</p>
+<p>This document provides a comprehensive guide to the <strong>Heading Controller</strong> in <code class="docutils literal notranslate"><span class="pre">libbno055-linux</span></code> (<code class="docutils literal notranslate"><span class="pre">bno055lib::HeadingController</span></code>), as well as its ROS 2 nodes (<code class="docutils literal notranslate"><span class="pre">bno055_heading_control_node</span></code> and <code class="docutils literal notranslate"><span class="pre">bno055_lifecycle_heading_control_node</span></code>).</p>
 <hr class="docutils" />
-<section id="theoretical-control-architecture">
-<h2>🏛️ Theoretical Control Architecture<a class="headerlink" href="#theoretical-control-architecture" title="Link to this heading">¶</a></h2>
-<p>The heading controller combines <strong>Kinematic Feedforward (FF)</strong> and <strong>Feedback (PID)</strong> optimal control to guarantee zero-drift straight driving and instantaneous transient response.</p>
+<section id="control-architecture">
+<h2>🏛️ Control Architecture<a class="headerlink" href="#control-architecture" title="Link to this heading">¶</a></h2>
+<p>The heading controller combines <strong>Kinematic Feedforward (FF)</strong> and <strong>Feedback (PID)</strong> control to maintain target heading and reduce straight-line drift.</p>
 <div class="highlight-text notranslate"><div class="highlight"><pre><span></span>                                +-----------------------------------+
                                 | Kinematic Feedforward (FF Term)   |
                                 |       u_FF = K_ff * w_ref         |
@@ -251,7 +251,7 @@
                                                   |
                                                   v
 +-------------------+   Angle Diff   +------------+------------+   u_total   +-------------------+
-| Target Heading    | -------------&gt; | Optimal PID Controller  | ----------&gt; | Differential      |
+| Target Heading    | -------------&gt; | PID Controller          | ----------&gt; | Differential      |
 | Quaternion / Deg  |  std::remainder| - P: Kp * error         |             | Motor Output      |
 +-------------------+                | - I: Trapezoidal Rule   |             | (Left &amp; Right)    |
                                      | - D: LPF Gyro (-Kd * w) |             +-------------------+
@@ -463,7 +463,7 @@ ros2<span class="w"> </span>launch<span class="w"> </span>libbno055_linux<span c
           <div class="toc-tree">
             <ul>
 <li><a class="reference internal" href="#">Robot Straight-Line &amp; Heading PID Controller Architecture</a><ul>
-<li><a class="reference internal" href="#theoretical-control-architecture">🏛️ Theoretical Control Architecture</a></li>
+<li><a class="reference internal" href="#control-architecture">🏛️ Control Architecture</a></li>
 <li><a class="reference internal" href="#key-mathematical-control-engineering-principles">🧠 Key Mathematical &amp; Control Engineering Principles</a><ul>
 <li><a class="reference internal" href="#shortest-path-angle-normalization-pm-180-circ-wrapping">1. Shortest-Path Angle Normalization ($\pm 180^\circ$ Wrapping)</a></li>
 <li><a class="reference internal" href="#trapezoidal-tustin-rule-integration">2. Trapezoidal (Tustin) Rule Integration</a></li>
