@@ -405,7 +405,12 @@
 <td class="text-center"><p><code class="docutils literal notranslate"><span class="pre">0.5</span></code></p></td>
 <td class="text-left"><p>Safety Watchdog timeout in seconds. Triggers Zero Velocity output if <code class="docutils literal notranslate"><span class="pre">cmd_vel_in</span></code> is lost.</p></td>
 </tr>
-<tr class="row-odd"><td class="text-left"><p><code class="docutils literal notranslate"><span class="pre">angular_deadband</span></code></p></td>
+<tr class="row-odd"><td class="text-left"><p><code class="docutils literal notranslate"><span class="pre">imu_timeout</span></code></p></td>
+<td class="text-center"><p><code class="docutils literal notranslate"><span class="pre">double</span></code></p></td>
+<td class="text-center"><p><code class="docutils literal notranslate"><span class="pre">1.0</span></code></p></td>
+<td class="text-left"><p>IMU connection loss timeout in seconds. Triggers Fail-Safe Passthrough if IMU is offline.</p></td>
+</tr>
+<tr class="row-even"><td class="text-left"><p><code class="docutils literal notranslate"><span class="pre">angular_deadband</span></code></p></td>
 <td class="text-center"><p><code class="docutils literal notranslate"><span class="pre">double</span></code></p></td>
 <td class="text-center"><p><code class="docutils literal notranslate"><span class="pre">0.01</span></code></p></td>
 <td class="text-left"><p>Turning threshold to disengage heading lock.</p></td>
